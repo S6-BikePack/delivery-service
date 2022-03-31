@@ -1,6 +1,6 @@
 module delivery-service
 
-go 1.17
+go 1.18
 
 require (
 	github.com/99designs/gqlgen v0.17.2
@@ -10,6 +10,7 @@ require (
 	github.com/swaggo/gin-swagger v1.4.1
 	github.com/swaggo/swag v1.7.9
 	github.com/vektah/gqlparser/v2 v2.4.0
+	golang.org/x/exp v0.0.0-20220328175248-053ad81199eb
 	gorm.io/driver/postgres v1.3.1
 	gorm.io/gorm v1.23.3
 )

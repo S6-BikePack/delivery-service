@@ -85,6 +85,26 @@ func (srv *service) AssignRider(id, riderId uuid.UUID) (domain.Delivery, error) 
 	return delivery, nil
 }
 
+func (srv *service) StartDelivery(id uuid.UUID) (domain.Delivery, error) {
+	delivery, err := srv.Get(id)
+
+	if err != nil {
+		return domain.Delivery{}, errors.New("could not find delivery with id")
+	}
+
+	delivery.Status = 2
+	delivery.DeliveryTime = time.Now()
+
+	delivery, err = srv.deliveryRepository.Update(delivery)
+
+	if err != nil {
+		return domain.Delivery{}, err
+	}
+
+	srv.messagePublisher.StartDelivery(delivery)
+	return delivery, nil
+}
+
 func (srv *service) CompleteDelivery(id uuid.UUID) (domain.Delivery, error) {
 	delivery, err := srv.Get(id)
 
@@ -101,7 +121,7 @@ func (srv *service) CompleteDelivery(id uuid.UUID) (domain.Delivery, error) {
 		return domain.Delivery{}, err
 	}
 
-	srv.messagePublisher.UpdateDelivery(delivery)
+	srv.messagePublisher.CompleteDelivery(delivery)
 	return delivery, nil
 }
 

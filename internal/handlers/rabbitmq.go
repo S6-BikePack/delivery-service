@@ -5,23 +5,41 @@ import (
 	"delivery-service/internal/core/ports"
 	"delivery-service/pkg/rabbitmq"
 	"encoding/json"
-	"errors"
-	"fmt"
+	"golang.org/x/exp/maps"
 )
 
 type rabbitmqHandler struct {
 	rabbitmq *rabbitmq.RabbitMQ
 	service  ports.DeliveryService
+	handlers map[string]func(topic string, body []byte, handler *rabbitmqHandler) error
 }
 
 func NewRabbitMQ(rabbitmq *rabbitmq.RabbitMQ, service ports.DeliveryService) *rabbitmqHandler {
 	return &rabbitmqHandler{
 		rabbitmq: rabbitmq,
 		service:  service,
+		handlers: map[string]func(topic string, body []byte, handler *rabbitmqHandler) error{
+			"rider.create": RiderCreateOrUpdate,
+			"rider.update": RiderCreateOrUpdate,
+		},
 	}
 }
 
-func (handler *rabbitmqHandler) Listen(topics ...string) {
+func RiderCreateOrUpdate(topic string, body []byte, handler *rabbitmqHandler) error {
+	var rider domain.Rider
+
+	if err := json.Unmarshal(body, &rider); err != nil {
+		return err
+	}
+
+	if err := handler.service.SaveRider(rider); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (handler *rabbitmqHandler) Listen() {
 
 	q, err := handler.rabbitmq.Channel.QueueDeclare(
 		"deliveryQueue",
@@ -36,7 +54,7 @@ func (handler *rabbitmqHandler) Listen(topics ...string) {
 		panic(err)
 	}
 
-	for _, s := range topics {
+	for _, s := range maps.Keys(handler.handlers) {
 		err = handler.rabbitmq.Channel.QueueBind(
 			q.Name,
 			s,
@@ -66,45 +84,23 @@ func (handler *rabbitmqHandler) Listen(topics ...string) {
 
 	go func() {
 		for msg := range msgs {
-			err = handler.handleMessage(msg.RoutingKey, msg.Body)
+			fun, exist := handler.handlers[msg.RoutingKey]
 
-			if err != nil {
-				msg.Ack(false)
-				continue
+			if exist {
+				if err = fun(msg.RoutingKey, msg.Body, handler); err == nil {
+					msg.Ack(false)
+					continue
+				}
 			}
 
-			msg.Ack(true)
+			msg.Nack(false, true)
 		}
 	}()
 
 	<-forever
 }
 
-func (handler *rabbitmqHandler) handleMessage(routing string, body []byte) error {
-	switch routing {
-	case "rider.create":
-		var rider domain.Rider
-
-		if err := json.Unmarshal(body, &rider); err != nil {
-			return err
-		}
-
-		if err := handler.service.SaveRider(rider); err != nil {
-			return err
-		}
-
-		return nil
-	case "rider.update":
-		return nil
-	case "delivery.create":
-		fmt.Printf("Route create")
-		fmt.Printf("Message payload: %s\n", body)
-		return nil
-	case "delivery.update":
-		fmt.Printf("Route update")
-		fmt.Printf("Message payload: %s\n", body)
-		return nil
-	default:
-		return errors.New("could not handle message")
-	}
+type MessageHandler struct {
+	topic   string
+	handler func(topic string, body []byte, handler *rabbitmqHandler) error
 }

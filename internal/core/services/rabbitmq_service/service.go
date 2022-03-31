@@ -21,17 +21,7 @@ func (rmq *rabbitmqPublisher) CreateDelivery(delivery domain.Delivery) error {
 		return err
 	}
 
-	err = rmq.Channel.Publish(
-		"topics",
-		"delivery.create",
-		false,
-		false,
-		amqp.Publishing{
-			DeliveryMode: amqp.Persistent,
-			ContentType:  "text/plain",
-			Body:         js,
-		},
-	)
+	err = rmq.publishMessage("delivery.create", js)
 
 	return err
 }
@@ -43,15 +33,49 @@ func (rmq *rabbitmqPublisher) UpdateDelivery(delivery domain.Delivery) error {
 		return err
 	}
 
-	err = rmq.Channel.Publish(
+	err = rmq.publishMessage("delivery.update", js)
+
+	return err
+}
+
+func (rmq *rabbitmqPublisher) StartDelivery(delivery domain.Delivery) error {
+	js, err := json.Marshal(struct{ ID uuid.UUID }{
+		ID: delivery.ID,
+	})
+
+	if err != nil {
+		return err
+	}
+
+	err = rmq.publishMessage("delivery.startDelivery", js)
+
+	return err
+}
+
+func (rmq *rabbitmqPublisher) CompleteDelivery(delivery domain.Delivery) error {
+	js, err := json.Marshal(struct{ ID uuid.UUID }{
+		ID: delivery.ID,
+	})
+
+	if err != nil {
+		return err
+	}
+
+	err = rmq.publishMessage("delivery.completeDelivery", js)
+
+	return err
+}
+
+func (rmq *rabbitmqPublisher) publishMessage(key string, body []byte) error {
+	err := rmq.Channel.Publish(
 		"topics",
-		"delivery.update",
+		key,
 		false,
 		false,
 		amqp.Publishing{
 			DeliveryMode: amqp.Persistent,
 			ContentType:  "text/plain",
-			Body:         js,
+			Body:         body,
 		},
 	)
 
@@ -60,12 +84,12 @@ func (rmq *rabbitmqPublisher) UpdateDelivery(delivery domain.Delivery) error {
 
 func (rmq *rabbitmqPublisher) GetRider(riderId uuid.UUID) (domain.Rider, error) {
 	q, err := rmq.Channel.QueueDeclare(
-		"",    // name
-		false, // durable
-		true,  // delete when unused
-		true,  // exclusive
-		false, // noWait
-		nil,   // arguments
+		"",
+		false,
+		true,
+		true,
+		false,
+		nil,
 	)
 
 	defer rmq.Channel.QueueDelete(q.Name, true, false, false)
@@ -75,13 +99,13 @@ func (rmq *rabbitmqPublisher) GetRider(riderId uuid.UUID) (domain.Rider, error) 
 	}
 
 	msgs, err := rmq.Channel.Consume(
-		q.Name, // queue
-		"",     // consumer
-		true,   // auto-ack
-		false,  // exclusive
-		false,  // no-local
-		false,  // no-wait
-		nil,    // args
+		q.Name,
+		"",
+		true,
+		false,
+		false,
+		false,
+		nil,
 	)
 
 	if err != nil {
@@ -91,10 +115,10 @@ func (rmq *rabbitmqPublisher) GetRider(riderId uuid.UUID) (domain.Rider, error) 
 	corrId := uuid.New().String()
 
 	err = rmq.Channel.Publish(
-		"",          // exchange
-		"rpc_queue", // routing key
-		false,       // mandatory
-		false,       // immediate
+		"",
+		"rpc_queue",
+		false,
+		false,
 		amqp.Publishing{
 			ContentType:   "text/plain",
 			CorrelationId: corrId,

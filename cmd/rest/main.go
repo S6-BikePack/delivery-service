@@ -6,15 +6,10 @@ import (
 	"delivery-service/internal/handlers"
 	"delivery-service/internal/repositories/delivery_repository"
 	"delivery-service/pkg/rabbitmq"
-	"github.com/swaggo/gin-swagger/swaggerFiles"
 	"log"
 	"os"
 
 	"github.com/gin-gonic/gin"
-
-	"delivery-service/docs"
-	_ "delivery-service/docs"
-	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
 const defaultPort = ":1234"
@@ -22,12 +17,7 @@ const defaultRmqConn = "amqp://user:password@localhost:5672/"
 const defaultDbConn = "postgresql://user:password@localhost:5432/delivery"
 
 func main() {
-	setupSwagger()
-
-	dbConn := os.Getenv("DATABASE")
-	if dbConn == "" {
-		dbConn = defaultDbConn
-	}
+	dbConn := GetEnvOrDefault("DATABASE", defaultDbConn)
 
 	deliveryRepository, err := delivery_repository.NewCockroachDB(dbConn)
 
@@ -35,10 +25,7 @@ func main() {
 		panic(err)
 	}
 
-	rmqConn := os.Getenv("RABBITMQ")
-	if rmqConn == "" {
-		rmqConn = defaultRmqConn
-	}
+	rmqConn := GetEnvOrDefault("RABBITMQ", defaultRmqConn)
 
 	rmqServer, err := rabbitmq.NewRabbitMQ(rmqConn)
 
@@ -52,28 +39,22 @@ func main() {
 
 	rmqSubscriber := handlers.NewRabbitMQ(rmqServer, deliveryService)
 
-	deliveryHandler := handlers.NewRest(deliveryService)
-
 	router := gin.New()
 
-	api := router.Group("/api")
+	deliveryHandler := handlers.NewRest(deliveryService, router)
+	deliveryHandler.SetupEndpoints()
+	deliveryHandler.SetupSwagger()
 
-	api.GET("/deliveries", deliveryHandler.GetAll)
-	api.GET("/deliveries/:id", deliveryHandler.Get)
-	api.POST("/deliveries", deliveryHandler.Create)
+	port := GetEnvOrDefault("PORT", defaultPort)
 
-	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
-
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = defaultPort
-	}
-
-	go rmqSubscriber.Listen("rider.#")
+	go rmqSubscriber.Listen()
 	log.Fatal(router.Run(port))
 }
 
-func setupSwagger() {
-	docs.SwaggerInfo.Title = "Delivery service API"
-	docs.SwaggerInfo.Description = "The delivery service manages all deliveries for the BikePack system."
+func GetEnvOrDefault(environmentKey, defaultValue string) string {
+	returnValue := os.Getenv(environmentKey)
+	if returnValue == "" {
+		returnValue = defaultValue
+	}
+	return returnValue
 }

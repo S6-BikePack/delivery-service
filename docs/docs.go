@@ -39,7 +39,7 @@ const docTemplate = `{
                 }
             },
             "post": {
-                "description": "creates a new rider",
+                "description": "creates a new delivery",
                 "consumes": [
                     "application/json"
                 ],
@@ -49,7 +49,7 @@ const docTemplate = `{
                 "summary": "create rider",
                 "parameters": [
                     {
-                        "description": "Add rider",
+                        "description": "Add delivery",
                         "name": "rider",
                         "in": "body",
                         "required": true,
@@ -70,20 +70,85 @@ const docTemplate = `{
         },
         "/api/deliveries/{id}": {
             "get": {
-                "description": "gets a rider from the system by its ID",
+                "description": "gets a delivery from the system by its ID",
                 "produces": [
                     "application/json"
                 ],
-                "summary": "get rider",
+                "summary": "get delivery",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Rider id",
+                        "description": "Delivery id",
                         "name": "id",
                         "in": "path",
                         "required": true
                     }
                 ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/domain.Delivery"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/deliveries/{id}/complete": {
+            "get": {
+                "description": "completes a delivery",
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "complete delivery",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/domain.Delivery"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/deliveries/{id}/rider": {
+            "post": {
+                "description": "assigns a rider to a delivery",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "assign rider",
+                "parameters": [
+                    {
+                        "description": "Assign rider",
+                        "name": "delivery",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.BodyAssignRider"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ResponseAssignRider"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/deliveries/{id}/start": {
+            "get": {
+                "description": "starts a delivery",
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "start delivery",
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -164,6 +229,14 @@ const docTemplate = `{
                 }
             }
         },
+        "dto.BodyAssignRider": {
+            "type": "object",
+            "properties": {
+                "riderId": {
+                    "type": "string"
+                }
+            }
+        },
         "dto.BodyCreateDelivery": {
             "type": "object",
             "properties": {
@@ -177,6 +250,38 @@ const docTemplate = `{
                     "$ref": "#/definitions/domain.Location"
                 },
                 "pickupTime": {
+                    "type": "integer"
+                }
+            }
+        },
+        "dto.ResponseAssignRider": {
+            "type": "object",
+            "properties": {
+                "deliveryPoint": {
+                    "$ref": "#/definitions/domain.Location"
+                },
+                "deliveryTime": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "parcel": {
+                    "$ref": "#/definitions/domain.Parcel"
+                },
+                "pickupPoint": {
+                    "$ref": "#/definitions/domain.Location"
+                },
+                "pickupTime": {
+                    "type": "string"
+                },
+                "rider": {
+                    "$ref": "#/definitions/domain.Rider"
+                },
+                "riderId": {
+                    "type": "string"
+                },
+                "status": {
                     "type": "integer"
                 }
             }
