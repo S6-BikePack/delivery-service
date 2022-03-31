@@ -1,0 +1,132 @@
+definitions:
+  domain.Delivery:
+    properties:
+      deliveryPoint:
+        $ref: '#/definitions/domain.Location'
+      deliveryTime:
+        type: string
+      id:
+        type: string
+      parcel:
+        $ref: '#/definitions/domain.Parcel'
+      pickupPoint:
+        $ref: '#/definitions/domain.Location'
+      pickupTime:
+        type: string
+      rider:
+        $ref: '#/definitions/domain.Rider'
+      riderId:
+        type: string
+      status:
+        type: integer
+    type: object
+  domain.Location:
+    properties:
+      latitude:
+        type: number
+      longitude:
+        type: number
+    type: object
+  domain.Parcel:
+    properties:
+      delivery:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+    type: object
+  domain.Rider:
+    properties:
+      id:
+        type: string
+      name:
+        type: string
+    type: object
+  dto.BodyCreateDelivery:
+    properties:
+      deliveryPoint:
+        $ref: '#/definitions/domain.Location'
+      parcelId:
+        type: string
+      pickupPoint:
+        $ref: '#/definitions/domain.Location'
+      pickupTime:
+        type: integer
+    type: object
+  dto.ResponseCreateDelivery:
+    properties:
+      deliveryPoint:
+        $ref: '#/definitions/domain.Location'
+      deliveryTime:
+        type: string
+      id:
+        type: string
+      parcel:
+        $ref: '#/definitions/domain.Parcel'
+      pickupPoint:
+        $ref: '#/definitions/domain.Location'
+      pickupTime:
+        type: string
+      rider:
+        $ref: '#/definitions/domain.Rider'
+      riderId:
+        type: string
+      status:
+        type: integer
+    type: object
+info:
+  contact: {}
+paths:
+  /api/deliveries:
+    get:
+      consumes:
+      - application/json
+      description: gets all deliveries in the system
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/domain.Delivery'
+            type: array
+      summary: get all deliveries
+    post:
+      consumes:
+      - application/json
+      description: creates a new rider
+      parameters:
+      - description: Add rider
+        in: body
+        name: rider
+        required: true
+        schema:
+          $ref: '#/definitions/dto.BodyCreateDelivery'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.ResponseCreateDelivery'
+      summary: create rider
+  /api/deliveries/{id}:
+    get:
+      description: gets a rider from the system by its ID
+      parameters:
+      - description: Rider id
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/domain.Delivery'
+      summary: get rider
+swagger: "2.0"
