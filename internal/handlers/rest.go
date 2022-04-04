@@ -88,7 +88,7 @@ func (handler *restHandler) Get(c *gin.Context) {
 }
 
 // Create godoc
-// @Summary  create rider
+// @Summary  create delivery
 // @Schemes
 // @Description  creates a new delivery
 // @Accept       json

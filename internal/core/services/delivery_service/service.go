@@ -29,9 +29,9 @@ func (srv *service) Get(id uuid.UUID) (domain.Delivery, error) {
 }
 
 func (srv *service) Create(parcelId uuid.UUID, pickupPoint, deliveryPoint domain.Location, pickupTime time.Time) (domain.Delivery, error) {
-	parcel := srv.deliveryRepository.GetParcel(parcelId)
+	parcel, err := srv.deliveryRepository.GetParcel(parcelId)
 
-	if parcel == (domain.Parcel{}) {
+	if err != nil {
 		return domain.Delivery{}, errors.New("parcel not found with id:" + parcelId.String())
 	}
 
@@ -66,9 +66,9 @@ func (srv *service) AssignRider(id, riderId uuid.UUID) (domain.Delivery, error) 
 		return domain.Delivery{}, errors.New("delivery already has rider assigned")
 	}
 
-	rider := srv.deliveryRepository.GetRider(riderId)
+	rider, err := srv.deliveryRepository.GetRider(riderId)
 
-	if rider == (domain.Rider{}) {
+	if err != nil {
 		return domain.Delivery{}, errors.New("rider not found with id:" + riderId.String())
 	}
 
@@ -126,15 +126,25 @@ func (srv *service) CompleteDelivery(id uuid.UUID) (domain.Delivery, error) {
 }
 
 func (srv *service) GetRider(id uuid.UUID) (domain.Rider, error) {
-	return srv.deliveryRepository.GetRider(id), nil
+	return srv.deliveryRepository.GetRider(id)
 }
 
-func (srv *service) SaveRider(rider domain.Rider) error {
+func (srv *service) SaveOrUpdateRider(rider domain.Rider) error {
 	if rider.Name == "" || rider.ID == uuid.Nil {
 		return errors.New("incomplete rider data")
 	}
 
-	_, err := srv.deliveryRepository.SaveRider(rider)
+	_, err := srv.deliveryRepository.SaveOrUpdateRider(rider)
+
+	return err
+}
+
+func (srv *service) SaveOrUpdateCustomer(customer domain.Customer) error {
+	if customer.Name == "" || customer.LastName == "" || customer.ID == uuid.Nil {
+		return errors.New("incomplete customer data")
+	}
+
+	_, err := srv.deliveryRepository.SaveOrUpdateCustomer(customer)
 
 	return err
 }

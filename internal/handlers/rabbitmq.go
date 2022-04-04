@@ -19,8 +19,10 @@ func NewRabbitMQ(rabbitmq *rabbitmq.RabbitMQ, service ports.DeliveryService) *ra
 		rabbitmq: rabbitmq,
 		service:  service,
 		handlers: map[string]func(topic string, body []byte, handler *rabbitmqHandler) error{
-			"rider.create": RiderCreateOrUpdate,
-			"rider.update": RiderCreateOrUpdate,
+			"rider.create":            RiderCreateOrUpdate,
+			"rider.update":            RiderCreateOrUpdate,
+			"customer.create":         CustomerCreateOrUpdate,
+			"customer.update.details": CustomerCreateOrUpdate,
 		},
 	}
 }
@@ -32,7 +34,21 @@ func RiderCreateOrUpdate(topic string, body []byte, handler *rabbitmqHandler) er
 		return err
 	}
 
-	if err := handler.service.SaveRider(rider); err != nil {
+	if err := handler.service.SaveOrUpdateRider(rider); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func CustomerCreateOrUpdate(topic string, body []byte, handler *rabbitmqHandler) error {
+	var customer domain.Customer
+
+	if err := json.Unmarshal(body, &customer); err != nil {
+		return err
+	}
+
+	if err := handler.service.SaveOrUpdateCustomer(customer); err != nil {
 		return err
 	}
 

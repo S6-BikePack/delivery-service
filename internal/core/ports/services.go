@@ -14,5 +14,6 @@ type DeliveryService interface {
 	StartDelivery(id uuid.UUID) (domain.Delivery, error)
 	CompleteDelivery(id uuid.UUID) (domain.Delivery, error)
 	GetRider(id uuid.UUID) (domain.Rider, error)
-	SaveRider(rider domain.Rider) error
+	SaveOrUpdateRider(rider domain.Rider) error
+	SaveOrUpdateCustomer(customer domain.Customer) error
 }

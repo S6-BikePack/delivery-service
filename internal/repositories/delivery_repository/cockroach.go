@@ -2,6 +2,7 @@ package delivery_repository
 
 import (
 	"delivery-service/internal/core/domain"
+	"errors"
 	"github.com/google/uuid"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -19,7 +20,7 @@ func NewCockroachDB(connStr string) (*cockroachdb, error) {
 		return nil, err
 	}
 
-	err = db.AutoMigrate(&domain.Delivery{}, &domain.Rider{}, &domain.Parcel{})
+	err = db.AutoMigrate(&domain.Delivery{}, &domain.Rider{}, &domain.Parcel{}, &domain.Customer{})
 
 	if err != nil {
 		return nil, err
@@ -68,30 +69,36 @@ func (repository *cockroachdb) Update(delivery domain.Delivery) (domain.Delivery
 	return delivery, nil
 }
 
-func (repository *cockroachdb) GetRider(riderId uuid.UUID) domain.Rider {
+func (repository *cockroachdb) GetRider(riderId uuid.UUID) (domain.Rider, error) {
 	var rider domain.Rider
 
 	repository.Connection.Preload(clause.Associations).First(&rider, riderId)
 
-	return rider
-}
-
-func (repository *cockroachdb) SaveRider(rider domain.Rider) (domain.Rider, error) {
-	result := repository.Connection.Create(&rider)
-
-	if result.Error != nil {
-		return domain.Rider{}, result.Error
+	if (rider == domain.Rider{}) {
+		return rider, errors.New("could not find rider")
 	}
 
 	return rider, nil
 }
 
-func (repository *cockroachdb) GetParcel(parcelId uuid.UUID) domain.Parcel {
+func (repository *cockroachdb) SaveOrUpdateRider(rider domain.Rider) (domain.Rider, error) {
+	if repository.Connection.Model(&rider).Where("id = ?", rider.ID).Updates(&rider).RowsAffected == 0 {
+		repository.Connection.Create(&rider)
+	}
+
+	return repository.GetRider(rider.ID)
+}
+
+func (repository *cockroachdb) GetParcel(parcelId uuid.UUID) (domain.Parcel, error) {
 	var parcel domain.Parcel
 
 	repository.Connection.Preload(clause.Associations).First(&parcel, parcelId)
 
-	return parcel
+	if (parcel == domain.Parcel{}) {
+		return parcel, errors.New("could not find customer")
+	}
+
+	return parcel, nil
 }
 
 func (repository *cockroachdb) SaveParcel(parcel domain.Parcel) (domain.Parcel, error) {
@@ -102,4 +109,24 @@ func (repository *cockroachdb) SaveParcel(parcel domain.Parcel) (domain.Parcel, 
 	}
 
 	return parcel, nil
+}
+
+func (repository *cockroachdb) GetCustomer(customerId uuid.UUID) (domain.Customer, error) {
+	var customer domain.Customer
+
+	repository.Connection.Preload(clause.Associations).First(&customer, customerId)
+
+	if (customer == domain.Customer{}) {
+		return customer, errors.New("could not find customer")
+	}
+
+	return customer, nil
+}
+
+func (repository *cockroachdb) SaveOrUpdateCustomer(customer domain.Customer) (domain.Customer, error) {
+	if repository.Connection.Model(&customer).Where("id = ?", customer.ID).Updates(&customer).RowsAffected == 0 {
+		repository.Connection.Create(&customer)
+	}
+
+	return repository.GetCustomer(customer.ID)
 }

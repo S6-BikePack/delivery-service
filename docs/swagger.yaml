@@ -137,7 +137,7 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/dto.ResponseCreateDelivery'
-      summary: create rider
+      summary: create delivery
   /api/deliveries/{id}:
     get:
       description: gets a delivery from the system by its ID

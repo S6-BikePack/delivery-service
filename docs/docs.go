@@ -46,7 +46,7 @@ const docTemplate = `{
                 "produces": [
                     "application/json"
                 ],
-                "summary": "create rider",
+                "summary": "create delivery",
                 "parameters": [
                     {
                         "description": "Add delivery",

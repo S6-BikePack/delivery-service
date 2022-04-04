@@ -10,8 +10,10 @@ type DeliveryRepository interface {
 	Get(id uuid.UUID) (domain.Delivery, error)
 	Save(delivery domain.Delivery) (domain.Delivery, error)
 	Update(delivery domain.Delivery) (domain.Delivery, error)
-	GetRider(riderId uuid.UUID) domain.Rider
-	SaveRider(rider domain.Rider) (domain.Rider, error)
-	GetParcel(parcelId uuid.UUID) domain.Parcel
+	GetRider(riderId uuid.UUID) (domain.Rider, error)
+	SaveOrUpdateRider(rider domain.Rider) (domain.Rider, error)
+	GetParcel(parcelId uuid.UUID) (domain.Parcel, error)
 	SaveParcel(parcel domain.Parcel) (domain.Parcel, error)
+	GetCustomer(customerId uuid.UUID) (domain.Customer, error)
+	SaveOrUpdateCustomer(customer domain.Customer) (domain.Customer, error)
 }
