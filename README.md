@@ -16,7 +16,7 @@
 <h4>
     <a href="https://github.com/S6-BikePack">Home</a>
   <span> · </span>
-    <a href="https://github.com/S6-BikePack/delivery-service#⭐-About-the-Project">Documentation</a>
+    <a href="https://github.com/S6-BikePack/delivery-service#-about-the-project">Documentation</a>
   </h4>
 </div>
 
@@ -25,17 +25,17 @@
 <!-- Table of Contents -->
 # 📓 Table of Contents
 
-- [About the Project](#⭐-About-the-Project)
-    * [Architecture](#🏠-Architecture)
-    * [Tech Stack](#🛰️-tech-stack)
-    * [Environment Variables](#🔑-environment-variables)
-- [Getting Started](#🛠️-getting-started)
-    * [Prerequisites](#‼️-prerequisites)
-    * [Running Tests](#🧪-running-tests)
-    * [Run Locally](#🏃-run-locally)
-    * [Deployment](#🚀-deployment)
-- [Usage](#👀-usage)
-    * [Messages](#📨-messages)
+- [About the Project](#-about-the-project)
+    * [Architecture](#-architecture)
+    * [Tech Stack](#%EF%B8%8F-tech-stack)
+    * [Environment Variables](#-environment-variables)
+- [Getting Started](%EF%B8%8F-getting-started)
+    * [Prerequisites](%EF%B8%8F-prerequisites)
+    * [Running Tests](#-running-tests)
+    * [Run Locally](#-run-locally)
+    * [Deployment](#-deployment)
+- [Usage](#-usage)
+    * [Messages](#-messages)
 
 
 
