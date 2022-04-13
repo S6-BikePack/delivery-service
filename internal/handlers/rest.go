@@ -4,7 +4,6 @@ import (
 	"delivery-service/internal/core/ports"
 	"delivery-service/pkg/dto"
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 	"github.com/swaggo/gin-swagger/swaggerFiles"
 	"time"
 
@@ -70,14 +69,7 @@ func (handler *restHandler) GetAll(c *gin.Context) {
 // @Success      200  {object}  domain.Delivery
 // @Router       /api/deliveries/{id} [get]
 func (handler *restHandler) Get(c *gin.Context) {
-	uid, err := uuid.Parse(c.Param("id"))
-
-	if err != nil {
-		c.AbortWithStatus(400)
-		return
-	}
-
-	delivery, err := handler.deliveryService.Get(uid)
+	delivery, err := handler.deliveryService.Get(c.Param("id"))
 
 	if err != nil {
 		c.AbortWithStatus(404)
@@ -104,15 +96,9 @@ func (handler *restHandler) Create(c *gin.Context) {
 		c.AbortWithStatus(500)
 	}
 
-	parcelId, err := uuid.Parse(body.ParcelId)
-
-	if err != nil {
-		c.AbortWithStatus(409)
-	}
-
 	pickupTime := time.Unix(body.PickupTime, 0)
 
-	delivery, err := handler.deliveryService.Create(parcelId, body.PickupPoint, body.DeliveryPoint, pickupTime)
+	delivery, err := handler.deliveryService.Create(body.ParcelId, body.PickupPoint, body.DeliveryPoint, pickupTime)
 
 	if err != nil {
 		c.AbortWithStatusJSON(500, gin.H{"message": err.Error()})
@@ -139,20 +125,7 @@ func (handler *restHandler) AssignRider(c *gin.Context) {
 		c.AbortWithStatus(500)
 	}
 
-	uid, err := uuid.Parse(c.Param("id"))
-
-	if err != nil {
-		c.AbortWithStatus(400)
-		return
-	}
-
-	riderId, err := uuid.Parse(body.RiderId)
-
-	if err != nil {
-		c.AbortWithStatus(409)
-	}
-
-	delivery, err := handler.deliveryService.AssignRider(uid, riderId)
+	delivery, err := handler.deliveryService.AssignRider(c.Param("id"), body.RiderId)
 
 	if err != nil {
 		c.AbortWithStatusJSON(500, gin.H{"message": err.Error()})
@@ -170,14 +143,7 @@ func (handler *restHandler) AssignRider(c *gin.Context) {
 // @Success      200  {object}  domain.Delivery
 // @Router       /api/deliveries/{id}/start [get]
 func (handler *restHandler) StartDelivery(c *gin.Context) {
-	uid, err := uuid.Parse(c.Param("id"))
-
-	if err != nil {
-		c.AbortWithStatus(400)
-		return
-	}
-
-	delivery, err := handler.deliveryService.StartDelivery(uid)
+	delivery, err := handler.deliveryService.StartDelivery(c.Param("id"))
 
 	if err != nil {
 		c.AbortWithStatusJSON(500, gin.H{"message": err.Error()})
@@ -195,14 +161,7 @@ func (handler *restHandler) StartDelivery(c *gin.Context) {
 // @Success      200  {object}  domain.Delivery
 // @Router       /api/deliveries/{id}/complete [get]
 func (handler *restHandler) CompleteDelivery(c *gin.Context) {
-	uid, err := uuid.Parse(c.Param("id"))
-
-	if err != nil {
-		c.AbortWithStatus(400)
-		return
-	}
-
-	delivery, err := handler.deliveryService.CompleteDelivery(uid)
+	delivery, err := handler.deliveryService.CompleteDelivery(c.Param("id"))
 
 	if err != nil {
 		c.AbortWithStatusJSON(500, gin.H{"message": err.Error()})

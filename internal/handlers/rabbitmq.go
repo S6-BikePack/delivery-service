@@ -23,6 +23,8 @@ func NewRabbitMQ(rabbitmq *rabbitmq.RabbitMQ, service ports.DeliveryService) *ra
 			"rider.update":            RiderCreateOrUpdate,
 			"customer.create":         CustomerCreateOrUpdate,
 			"customer.update.details": CustomerCreateOrUpdate,
+			"parcel.create":           ParcelCreateOrUpdate,
+			"parcel.update.status":    ParcelCreateOrUpdate,
 		},
 	}
 }
@@ -55,10 +57,24 @@ func CustomerCreateOrUpdate(topic string, body []byte, handler *rabbitmqHandler)
 	return nil
 }
 
-func (handler *rabbitmqHandler) Listen() {
+func ParcelCreateOrUpdate(topic string, body []byte, handler *rabbitmqHandler) error {
+	var parcel domain.Parcel
+
+	if err := json.Unmarshal(body, &parcel); err != nil {
+		return err
+	}
+
+	if err := handler.service.SaveOrUpdateParcel(parcel); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (handler *rabbitmqHandler) Listen(queue string) {
 
 	q, err := handler.rabbitmq.Channel.QueueDeclare(
-		"deliveryQueue",
+		queue,
 		true,
 		false,
 		false,

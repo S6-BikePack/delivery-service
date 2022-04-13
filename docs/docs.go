@@ -161,9 +161,29 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "domain.Customer": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "serviceArea": {
+                    "type": "integer"
+                }
+            }
+        },
         "domain.Delivery": {
             "type": "object",
             "properties": {
+                "customer": {
+                    "$ref": "#/definitions/domain.Customer"
+                },
+                "customerId": {
+                    "type": "string"
+                },
                 "deliveryPoint": {
                     "$ref": "#/definitions/domain.Location"
                 },
@@ -175,6 +195,9 @@ const docTemplate = `{
                 },
                 "parcel": {
                     "$ref": "#/definitions/domain.Parcel"
+                },
+                "parcelId": {
+                    "type": "string"
                 },
                 "pickupPoint": {
                     "$ref": "#/definitions/domain.Location"
@@ -193,6 +216,20 @@ const docTemplate = `{
                 }
             }
         },
+        "domain.Dimensions": {
+            "type": "object",
+            "properties": {
+                "depth": {
+                    "type": "integer"
+                },
+                "height": {
+                    "type": "integer"
+                },
+                "width": {
+                    "type": "integer"
+                }
+            }
+        },
         "domain.Location": {
             "type": "object",
             "properties": {
@@ -207,7 +244,7 @@ const docTemplate = `{
         "domain.Parcel": {
             "type": "object",
             "properties": {
-                "delivery": {
+                "deliverId": {
                     "type": "string"
                 },
                 "id": {
@@ -215,6 +252,9 @@ const docTemplate = `{
                 },
                 "name": {
                     "type": "string"
+                },
+                "size": {
+                    "$ref": "#/definitions/domain.Dimensions"
                 }
             }
         },
@@ -257,6 +297,12 @@ const docTemplate = `{
         "dto.ResponseAssignRider": {
             "type": "object",
             "properties": {
+                "customer": {
+                    "$ref": "#/definitions/domain.Customer"
+                },
+                "customerId": {
+                    "type": "string"
+                },
                 "deliveryPoint": {
                     "$ref": "#/definitions/domain.Location"
                 },
@@ -268,6 +314,9 @@ const docTemplate = `{
                 },
                 "parcel": {
                     "$ref": "#/definitions/domain.Parcel"
+                },
+                "parcelId": {
+                    "type": "string"
                 },
                 "pickupPoint": {
                     "$ref": "#/definitions/domain.Location"
@@ -289,6 +338,12 @@ const docTemplate = `{
         "dto.ResponseCreateDelivery": {
             "type": "object",
             "properties": {
+                "customer": {
+                    "$ref": "#/definitions/domain.Customer"
+                },
+                "customerId": {
+                    "type": "string"
+                },
                 "deliveryPoint": {
                     "$ref": "#/definitions/domain.Location"
                 },
@@ -300,6 +355,9 @@ const docTemplate = `{
                 },
                 "parcel": {
                     "$ref": "#/definitions/domain.Parcel"
+                },
+                "parcelId": {
+                    "type": "string"
                 },
                 "pickupPoint": {
                     "$ref": "#/definitions/domain.Location"

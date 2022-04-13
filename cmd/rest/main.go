@@ -6,6 +6,8 @@ import (
 	"delivery-service/internal/handlers"
 	"delivery-service/internal/repositories/delivery_repository"
 	"delivery-service/pkg/rabbitmq"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
 	"log"
 	"os"
 
@@ -19,7 +21,13 @@ const defaultDbConn = "postgresql://user:password@localhost:5432/delivery"
 func main() {
 	dbConn := GetEnvOrDefault("DATABASE", defaultDbConn)
 
-	deliveryRepository, err := delivery_repository.NewCockroachDB(dbConn)
+	db, err := gorm.Open(postgres.Open(dbConn))
+
+	if err != nil {
+		panic(err)
+	}
+
+	deliveryRepository, err := delivery_repository.NewCockroachDB(db)
 
 	if err != nil {
 		panic(err)
@@ -47,7 +55,7 @@ func main() {
 
 	port := GetEnvOrDefault("PORT", defaultPort)
 
-	go rmqSubscriber.Listen()
+	go rmqSubscriber.Listen("deliveryQueue")
 	log.Fatal(router.Run(port))
 }
 

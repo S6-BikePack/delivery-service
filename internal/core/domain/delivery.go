@@ -2,15 +2,17 @@ package domain
 
 import (
 	"errors"
-	"github.com/google/uuid"
 	"time"
 )
 
 type Delivery struct {
-	ID            uuid.UUID `gorm:"type:uuid;default:uuid_generate_v4()"`
-	Parcel        Parcel    `gorm:"foreignKey:delivery"`
-	RiderId       uuid.UUID
-	Rider         Rider    `gorm:"foreignKey:RiderId"`
+	ID            string
+	ParcelId      string
+	Parcel        Parcel `gorm:"foreignKey:DeliveryId"`
+	RiderId       string
+	Rider         Rider `gorm:"foreignKey:RiderId"`
+	CustomerId    string
+	Customer      Customer `gorm:"foreignKey:CustomerId"`
 	PickupPoint   Location `gorm:"embedded;embeddedPrefix:pickup_"`
 	PickupTime    time.Time
 	DeliveryPoint Location `gorm:"embedded;embeddedPrefix:delivery_"`

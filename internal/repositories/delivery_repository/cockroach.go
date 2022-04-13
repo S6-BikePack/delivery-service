@@ -3,8 +3,6 @@ package delivery_repository
 import (
 	"delivery-service/internal/core/domain"
 	"errors"
-	"github.com/google/uuid"
-	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
@@ -13,14 +11,8 @@ type cockroachdb struct {
 	Connection *gorm.DB
 }
 
-func NewCockroachDB(connStr string) (*cockroachdb, error) {
-	db, err := gorm.Open(postgres.Open(connStr))
-
-	if err != nil {
-		return nil, err
-	}
-
-	err = db.AutoMigrate(&domain.Delivery{}, &domain.Rider{}, &domain.Parcel{}, &domain.Customer{})
+func NewCockroachDB(db *gorm.DB) (*cockroachdb, error) {
+	err := db.AutoMigrate(&domain.Delivery{}, &domain.Rider{}, &domain.Parcel{}, &domain.Customer{})
 
 	if err != nil {
 		return nil, err
@@ -33,7 +25,7 @@ func NewCockroachDB(connStr string) (*cockroachdb, error) {
 	return &database, nil
 }
 
-func (repository *cockroachdb) Get(id uuid.UUID) (domain.Delivery, error) {
+func (repository *cockroachdb) Get(id string) (domain.Delivery, error) {
 	var delivery domain.Delivery
 
 	repository.Connection.Preload(clause.Associations).First(&delivery, id)
@@ -69,7 +61,7 @@ func (repository *cockroachdb) Update(delivery domain.Delivery) (domain.Delivery
 	return delivery, nil
 }
 
-func (repository *cockroachdb) GetRider(riderId uuid.UUID) (domain.Rider, error) {
+func (repository *cockroachdb) GetRider(riderId string) (domain.Rider, error) {
 	var rider domain.Rider
 
 	repository.Connection.Preload(clause.Associations).First(&rider, riderId)
@@ -89,7 +81,7 @@ func (repository *cockroachdb) SaveOrUpdateRider(rider domain.Rider) (domain.Rid
 	return repository.GetRider(rider.ID)
 }
 
-func (repository *cockroachdb) GetParcel(parcelId uuid.UUID) (domain.Parcel, error) {
+func (repository *cockroachdb) GetParcel(parcelId string) (domain.Parcel, error) {
 	var parcel domain.Parcel
 
 	repository.Connection.Preload(clause.Associations).First(&parcel, parcelId)
@@ -111,7 +103,7 @@ func (repository *cockroachdb) SaveParcel(parcel domain.Parcel) (domain.Parcel, 
 	return parcel, nil
 }
 
-func (repository *cockroachdb) GetCustomer(customerId uuid.UUID) (domain.Customer, error) {
+func (repository *cockroachdb) GetCustomer(customerId string) (domain.Customer, error) {
 	var customer domain.Customer
 
 	repository.Connection.Preload(clause.Associations).First(&customer, customerId)
@@ -129,4 +121,12 @@ func (repository *cockroachdb) SaveOrUpdateCustomer(customer domain.Customer) (d
 	}
 
 	return repository.GetCustomer(customer.ID)
+}
+
+func (repository *cockroachdb) SaveOrUpdateParcel(parcel domain.Parcel) (domain.Parcel, error) {
+	if repository.Connection.Model(&parcel).Where("id = ?", parcel.ID).Updates(&parcel).RowsAffected == 0 {
+		repository.Connection.Create(&parcel)
+	}
+
+	return repository.GetParcel(parcel.ID)
 }

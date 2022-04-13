@@ -1,6 +1,19 @@
 definitions:
+  domain.Customer:
+    properties:
+      id:
+        type: string
+      name:
+        type: string
+      serviceArea:
+        type: integer
+    type: object
   domain.Delivery:
     properties:
+      customer:
+        $ref: '#/definitions/domain.Customer'
+      customerId:
+        type: string
       deliveryPoint:
         $ref: '#/definitions/domain.Location'
       deliveryTime:
@@ -9,6 +22,8 @@ definitions:
         type: string
       parcel:
         $ref: '#/definitions/domain.Parcel'
+      parcelId:
+        type: string
       pickupPoint:
         $ref: '#/definitions/domain.Location'
       pickupTime:
@@ -20,6 +35,15 @@ definitions:
       status:
         type: integer
     type: object
+  domain.Dimensions:
+    properties:
+      depth:
+        type: integer
+      height:
+        type: integer
+      width:
+        type: integer
+    type: object
   domain.Location:
     properties:
       latitude:
@@ -29,12 +53,14 @@ definitions:
     type: object
   domain.Parcel:
     properties:
-      delivery:
+      deliverId:
         type: string
       id:
         type: string
       name:
         type: string
+      size:
+        $ref: '#/definitions/domain.Dimensions'
     type: object
   domain.Rider:
     properties:
@@ -61,6 +87,10 @@ definitions:
     type: object
   dto.ResponseAssignRider:
     properties:
+      customer:
+        $ref: '#/definitions/domain.Customer'
+      customerId:
+        type: string
       deliveryPoint:
         $ref: '#/definitions/domain.Location'
       deliveryTime:
@@ -69,6 +99,8 @@ definitions:
         type: string
       parcel:
         $ref: '#/definitions/domain.Parcel'
+      parcelId:
+        type: string
       pickupPoint:
         $ref: '#/definitions/domain.Location'
       pickupTime:
@@ -82,6 +114,10 @@ definitions:
     type: object
   dto.ResponseCreateDelivery:
     properties:
+      customer:
+        $ref: '#/definitions/domain.Customer'
+      customerId:
+        type: string
       deliveryPoint:
         $ref: '#/definitions/domain.Location'
       deliveryTime:
@@ -90,6 +126,8 @@ definitions:
         type: string
       parcel:
         $ref: '#/definitions/domain.Parcel'
+      parcelId:
+        type: string
       pickupPoint:
         $ref: '#/definitions/domain.Location'
       pickupTime:

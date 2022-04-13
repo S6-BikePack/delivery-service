@@ -149,9 +149,29 @@
         }
     },
     "definitions": {
+        "domain.Customer": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "serviceArea": {
+                    "type": "integer"
+                }
+            }
+        },
         "domain.Delivery": {
             "type": "object",
             "properties": {
+                "customer": {
+                    "$ref": "#/definitions/domain.Customer"
+                },
+                "customerId": {
+                    "type": "string"
+                },
                 "deliveryPoint": {
                     "$ref": "#/definitions/domain.Location"
                 },
@@ -163,6 +183,9 @@
                 },
                 "parcel": {
                     "$ref": "#/definitions/domain.Parcel"
+                },
+                "parcelId": {
+                    "type": "string"
                 },
                 "pickupPoint": {
                     "$ref": "#/definitions/domain.Location"
@@ -181,6 +204,20 @@
                 }
             }
         },
+        "domain.Dimensions": {
+            "type": "object",
+            "properties": {
+                "depth": {
+                    "type": "integer"
+                },
+                "height": {
+                    "type": "integer"
+                },
+                "width": {
+                    "type": "integer"
+                }
+            }
+        },
         "domain.Location": {
             "type": "object",
             "properties": {
@@ -195,7 +232,7 @@
         "domain.Parcel": {
             "type": "object",
             "properties": {
-                "delivery": {
+                "deliverId": {
                     "type": "string"
                 },
                 "id": {
@@ -203,6 +240,9 @@
                 },
                 "name": {
                     "type": "string"
+                },
+                "size": {
+                    "$ref": "#/definitions/domain.Dimensions"
                 }
             }
         },
@@ -245,6 +285,12 @@
         "dto.ResponseAssignRider": {
             "type": "object",
             "properties": {
+                "customer": {
+                    "$ref": "#/definitions/domain.Customer"
+                },
+                "customerId": {
+                    "type": "string"
+                },
                 "deliveryPoint": {
                     "$ref": "#/definitions/domain.Location"
                 },
@@ -256,6 +302,9 @@
                 },
                 "parcel": {
                     "$ref": "#/definitions/domain.Parcel"
+                },
+                "parcelId": {
+                    "type": "string"
                 },
                 "pickupPoint": {
                     "$ref": "#/definitions/domain.Location"
@@ -277,6 +326,12 @@
         "dto.ResponseCreateDelivery": {
             "type": "object",
             "properties": {
+                "customer": {
+                    "$ref": "#/definitions/domain.Customer"
+                },
+                "customerId": {
+                    "type": "string"
+                },
                 "deliveryPoint": {
                     "$ref": "#/definitions/domain.Location"
                 },
@@ -288,6 +343,9 @@
                 },
                 "parcel": {
                     "$ref": "#/definitions/domain.Parcel"
+                },
+                "parcelId": {
+                    "type": "string"
                 },
                 "pickupPoint": {
                     "$ref": "#/definitions/domain.Location"
