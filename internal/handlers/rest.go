@@ -1,10 +1,14 @@
 package handlers
 
 import (
+	"delivery-service/internal/core/domain"
 	"delivery-service/internal/core/ports"
 	"delivery-service/pkg/dto"
 	"github.com/gin-gonic/gin"
 	"github.com/swaggo/gin-swagger/swaggerFiles"
+	"net/http"
+	"strconv"
+	"strings"
 	"time"
 
 	"delivery-service/docs"
@@ -15,12 +19,14 @@ import (
 type restHandler struct {
 	deliveryService ports.DeliveryService
 	router          *gin.Engine
+	logger          ports.LoggingService
 }
 
-func NewRest(deliveryService ports.DeliveryService, router *gin.Engine) *restHandler {
+func NewRest(deliveryService ports.DeliveryService, router *gin.Engine, logger ports.LoggingService) *restHandler {
 	return &restHandler{
 		deliveryService: deliveryService,
 		router:          router,
+		logger:          logger,
 	}
 }
 
@@ -28,6 +34,7 @@ func (handler *restHandler) SetupEndpoints() {
 	api := handler.router.Group("/api")
 	api.GET("/deliveries", handler.GetAll)
 	api.GET("/deliveries/:id", handler.Get)
+	api.GET("/deliveries/radius/:latlon", handler.GetByDistance)
 	api.POST("/deliveries", handler.Create)
 	api.POST("/deliveries/:id/rider", handler.AssignRider)
 	api.GET("/deliveries/:id/start", handler.StartDelivery)
@@ -76,7 +83,54 @@ func (handler *restHandler) Get(c *gin.Context) {
 		return
 	}
 
-	c.JSON(200, delivery)
+	c.JSON(200, dto.BuildResponseCreateDelivery(delivery))
+}
+
+// GetByDistance godoc
+// @Summary  get delivery by distance
+// @Schemes
+// @Param        latlon     path  string           true  "Latitude,Longitude"
+// @Param        radius    query     int  false  "radius of search in meters (default = 1000)"
+// @Description  gets a delivery from the system based on the distance to the given point
+// @Produce      json
+// @Success      200  {object}  domain.Delivery
+// @Router       /api/deliveries/radius/{latlon} [get]
+func (handler *restHandler) GetByDistance(c *gin.Context) {
+	latlon := strings.Split(c.Param("latlon"), ",")
+
+	lat, err := strconv.ParseFloat(latlon[0], 64)
+
+	if err != nil {
+		c.AbortWithStatus(http.StatusBadRequest)
+	}
+
+	lon, err := strconv.ParseFloat(latlon[1], 64)
+
+	if err != nil {
+		c.AbortWithStatus(http.StatusBadRequest)
+	}
+
+	radiusQuery := c.Query("radius")
+	var radius int64
+
+	if radiusQuery != "" {
+		radius, err = strconv.ParseInt(radiusQuery, 10, 32)
+	} else {
+		radius = 1000
+	}
+
+	if err != nil {
+		c.AbortWithStatus(http.StatusBadRequest)
+	}
+
+	location := domain.Location{
+		Latitude:  lat,
+		Longitude: lon,
+	}
+
+	deliveries := handler.deliveryService.GetByDistance(location, int(radius))
+
+	c.JSON(200, deliveries)
 }
 
 // Create godoc
@@ -93,19 +147,21 @@ func (handler *restHandler) Create(c *gin.Context) {
 	err := c.BindJSON(&body)
 
 	if err != nil {
+		handler.logger.Error(err)
 		c.AbortWithStatus(500)
 	}
 
 	pickupTime := time.Unix(body.PickupTime, 0)
 
-	delivery, err := handler.deliveryService.Create(body.ParcelId, body.PickupPoint, body.DeliveryPoint, pickupTime)
+	delivery, err := handler.deliveryService.Create(body.ParcelId, body.OwnerId, body.PickupPoint, body.DeliveryPoint, pickupTime)
 
 	if err != nil {
+		handler.logger.Error(err)
 		c.AbortWithStatusJSON(500, gin.H{"message": err.Error()})
 		return
 	}
 
-	c.JSON(200, dto.BuildResponseCreateDelivery(delivery))
+	c.JSON(200, delivery)
 }
 
 // AssignRider godoc
@@ -122,12 +178,14 @@ func (handler *restHandler) AssignRider(c *gin.Context) {
 	err := c.BindJSON(&body)
 
 	if err != nil {
+		handler.logger.Error(err)
 		c.AbortWithStatus(500)
 	}
 
 	delivery, err := handler.deliveryService.AssignRider(c.Param("id"), body.RiderId)
 
 	if err != nil {
+		handler.logger.Error(err)
 		c.AbortWithStatusJSON(500, gin.H{"message": err.Error()})
 		return
 	}
@@ -146,6 +204,7 @@ func (handler *restHandler) StartDelivery(c *gin.Context) {
 	delivery, err := handler.deliveryService.StartDelivery(c.Param("id"))
 
 	if err != nil {
+		handler.logger.Error(err)
 		c.AbortWithStatusJSON(500, gin.H{"message": err.Error()})
 		return
 	}
@@ -164,6 +223,7 @@ func (handler *restHandler) CompleteDelivery(c *gin.Context) {
 	delivery, err := handler.deliveryService.CompleteDelivery(c.Param("id"))
 
 	if err != nil {
+		handler.logger.Error(err)
 		c.AbortWithStatusJSON(500, gin.H{"message": err.Error()})
 		return
 	}

@@ -28,7 +28,7 @@ func NewCockroachDB(db *gorm.DB) (*cockroachdb, error) {
 func (repository *cockroachdb) Get(id string) (domain.Delivery, error) {
 	var delivery domain.Delivery
 
-	repository.Connection.Preload(clause.Associations).First(&delivery, id)
+	repository.Connection.Preload(clause.Associations).First(&delivery, "id = ?", id)
 
 	return delivery, nil
 }
@@ -41,8 +41,21 @@ func (repository *cockroachdb) GetAll() ([]domain.Delivery, error) {
 	return deliveries, nil
 }
 
+func (repository *cockroachdb) GetWithinRadius(location domain.Location, radius int) []domain.Delivery {
+	var deliveries []domain.Delivery
+
+	repository.Connection.Raw("SELECT * FROM deliveries WHERE st_distancesphere(pickup_point, ST_MakePoint(?, ?)) <= ?", location.Longitude, location.Latitude, radius).Scan(&deliveries)
+
+	if deliveries == nil {
+		return []domain.Delivery{}
+	}
+
+	return deliveries
+}
+
 func (repository *cockroachdb) Save(delivery domain.Delivery) (domain.Delivery, error) {
-	result := repository.Connection.Omit("RiderId").Create(&delivery)
+
+	result := repository.Connection.Omit("RiderId", "Rider").Create(&delivery)
 
 	if result.Error != nil {
 		return domain.Delivery{}, result.Error
@@ -84,7 +97,7 @@ func (repository *cockroachdb) SaveOrUpdateRider(rider domain.Rider) (domain.Rid
 func (repository *cockroachdb) GetParcel(parcelId string) (domain.Parcel, error) {
 	var parcel domain.Parcel
 
-	repository.Connection.Preload(clause.Associations).First(&parcel, parcelId)
+	repository.Connection.First(&parcel, "id = ?", parcelId)
 
 	if (parcel == domain.Parcel{}) {
 		return parcel, errors.New("could not find customer")
@@ -106,7 +119,7 @@ func (repository *cockroachdb) SaveParcel(parcel domain.Parcel) (domain.Parcel, 
 func (repository *cockroachdb) GetCustomer(customerId string) (domain.Customer, error) {
 	var customer domain.Customer
 
-	repository.Connection.Preload(clause.Associations).First(&customer, customerId)
+	repository.Connection.Preload(clause.Associations).First(&customer, "id = ?", customerId)
 
 	if (customer == domain.Customer{}) {
 		return customer, errors.New("could not find customer")
@@ -124,8 +137,8 @@ func (repository *cockroachdb) SaveOrUpdateCustomer(customer domain.Customer) (d
 }
 
 func (repository *cockroachdb) SaveOrUpdateParcel(parcel domain.Parcel) (domain.Parcel, error) {
-	if repository.Connection.Model(&parcel).Where("id = ?", parcel.ID).Updates(&parcel).RowsAffected == 0 {
-		repository.Connection.Create(&parcel)
+	if repository.Connection.Model(&parcel).Omit("delivery_id").Where("id = ?", parcel.ID).Updates(&parcel).RowsAffected == 0 {
+		repository.Connection.Omit("delivery_id").Create(&parcel)
 	}
 
 	return repository.GetParcel(parcel.ID)

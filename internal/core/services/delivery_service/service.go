@@ -27,18 +27,28 @@ func (srv *service) Get(id string) (domain.Delivery, error) {
 	return srv.deliveryRepository.Get(id)
 }
 
-func (srv *service) Create(parcelId string, pickupPoint, deliveryPoint domain.Location, pickupTime time.Time) (domain.Delivery, error) {
+func (srv *service) GetByDistance(location domain.Location, radius int) []domain.Delivery {
+	return srv.deliveryRepository.GetWithinRadius(location, radius)
+}
+
+func (srv *service) Create(parcelId, ownerId string, pickupPoint, deliveryPoint domain.Location, pickupTime time.Time) (domain.Delivery, error) {
+	owner, err := srv.deliveryRepository.GetCustomer(ownerId)
+
+	if err != nil {
+		return domain.Delivery{}, err
+	}
+
 	parcel, err := srv.deliveryRepository.GetParcel(parcelId)
 
 	if err != nil {
 		return domain.Delivery{}, errors.New("parcel not found with id:" + parcelId)
 	}
 
-	if parcel.DeliverId != "" {
+	if parcel.DeliveryId != "" {
 		return domain.Delivery{}, errors.New("parcel is already part of a delivery")
 	}
 
-	delivery, err := domain.NewDelivery(parcel, pickupPoint, deliveryPoint, pickupTime)
+	delivery, err := domain.NewDelivery(parcel, owner, pickupPoint, deliveryPoint, pickupTime)
 
 	if err != nil {
 		return domain.Delivery{}, err
@@ -139,7 +149,7 @@ func (srv *service) SaveOrUpdateRider(rider domain.Rider) error {
 }
 
 func (srv *service) SaveOrUpdateCustomer(customer domain.Customer) error {
-	if customer.Name == "" || customer.ID == "" {
+	if customer.ID == "" {
 		return errors.New("incomplete customer data")
 	}
 

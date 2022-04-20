@@ -68,6 +68,39 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/deliveries/radius/{latlon}": {
+            "get": {
+                "description": "gets a delivery from the system based on the distance to the given point",
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "get delivery by distance",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Latitude,Longitude",
+                        "name": "latlon",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "format": "number",
+                        "description": "radius of search in meters (default = 1000)",
+                        "name": "radius",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/domain.Delivery"
+                        }
+                    }
+                }
+            }
+        },
         "/api/deliveries/{id}": {
             "get": {
                 "description": "gets a delivery from the system by its ID",
@@ -244,7 +277,7 @@ const docTemplate = `{
         "domain.Parcel": {
             "type": "object",
             "properties": {
-                "deliverId": {
+                "deliveryId": {
                     "type": "string"
                 },
                 "id": {
@@ -255,6 +288,9 @@ const docTemplate = `{
                 },
                 "size": {
                     "$ref": "#/definitions/domain.Dimensions"
+                },
+                "weight": {
+                    "type": "integer"
                 }
             }
         },
@@ -282,6 +318,9 @@ const docTemplate = `{
             "properties": {
                 "deliveryPoint": {
                     "$ref": "#/definitions/domain.Location"
+                },
+                "ownerId": {
+                    "type": "string"
                 },
                 "parcelId": {
                     "type": "string"
@@ -338,40 +377,19 @@ const docTemplate = `{
         "dto.ResponseCreateDelivery": {
             "type": "object",
             "properties": {
-                "customer": {
-                    "$ref": "#/definitions/domain.Customer"
-                },
-                "customerId": {
-                    "type": "string"
-                },
                 "deliveryPoint": {
                     "$ref": "#/definitions/domain.Location"
                 },
-                "deliveryTime": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "string"
+                "owner": {
+                    "$ref": "#/definitions/domain.Customer"
                 },
                 "parcel": {
                     "$ref": "#/definitions/domain.Parcel"
-                },
-                "parcelId": {
-                    "type": "string"
                 },
                 "pickupPoint": {
                     "$ref": "#/definitions/domain.Location"
                 },
                 "pickupTime": {
-                    "type": "string"
-                },
-                "rider": {
-                    "$ref": "#/definitions/domain.Rider"
-                },
-                "riderId": {
-                    "type": "string"
-                },
-                "status": {
                     "type": "integer"
                 }
             }

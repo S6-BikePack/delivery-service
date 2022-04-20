@@ -7,6 +7,7 @@ import (
 type DeliveryRepository interface {
 	GetAll() ([]domain.Delivery, error)
 	Get(id string) (domain.Delivery, error)
+	GetWithinRadius(location domain.Location, radius int) []domain.Delivery
 	Save(delivery domain.Delivery) (domain.Delivery, error)
 	Update(delivery domain.Delivery) (domain.Delivery, error)
 	GetRider(riderId string) (domain.Rider, error)
