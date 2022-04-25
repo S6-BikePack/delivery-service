@@ -29,13 +29,14 @@
     * [Architecture](#-architecture)
     * [Tech Stack](#%EF%B8%8F-tech-stack)
     * [Environment Variables](#-environment-variables)
+    * [Messages](#-messages)
 - [Getting Started](%EF%B8%8F-getting-started)
     * [Prerequisites](%EF%B8%8F-prerequisites)
     * [Running Tests](#-running-tests)
     * [Run Locally](#-run-locally)
     * [Deployment](#-deployment)
 - [Usage](#-usage)
-    * [Messages](#-messages)
+
 
 
 
@@ -81,59 +82,52 @@ This service has the following environment variables that can be set:
 
 `Database` - Database connection string
 
-<!-- Getting Started -->
-## 	🛠️ Getting Started
+<!-- Data -->
 
-<!-- Prerequisites -->
-### ‼️ Prerequisites
+##  🗃️ Data
 
-Building the project requires Go 1.18.
+This service stores the following data:
 
-This project requires a PostgreSQL compatible database with a database named `delivery` and a RabbitMQ server.
-The easiest way to setup the project is to use the Docker-Compose file from the infrastructure repository.
-
-<!-- Running Tests -->
-### 🧪 Running Tests
-
--
-
-<!-- Run Locally -->
-### 🏃 Run Locally
-
-Clone the project
-
-```bash
-  git clone https://github.com/S6-BikePack/delivery-service
+```json
+{
+  "ID": "string",
+  "Parcel": {
+    "ID": "string",
+    "Size": {
+      "Width": "int",
+      "Height": "int",
+      "Depth": "int"
+    },
+    "ServiceArea": "int",
+    "Weight": "int"
+  },
+  "Rider": {
+    "ID": "string",
+    "ServiceArea": "int"
+  },
+  "Customer": {
+    "ID": "string",
+    "ServiceArea": "int"
+  },
+  "Pickup": {
+    "Coordinates": {
+      "Latitude": "float64",
+      "Longitude": "float64"
+    },
+    "Address": "string",
+    "Time": "time"
+  },
+  "Destination": {
+    "Coordinates": {
+      "Latitude": "float64",
+      "Longitude": "float64"
+    },
+    "Address": "string",
+    "Time": "time"
+  },
+  "Status": "int"
+}
 ```
-
-Go to the project directory
-
-```bash
-  cd delivery-service
-```
-
-Run the project (Rest)
-
-```bash
-  go run cmd/rest/main.go
-```
-
-
-<!-- Deployment -->
-### 🚀 Deployment
-
-To build this project run (Rest)
-
-```bash
-  go build cmd/rest/main.go
-```
-
-
-<!-- Usage -->
-## 👀 Usage
-
-### REST
-Once the service is running you can find its swagger documentation with all the endpoints at `/swagger` 
 
 <!-- Messages -->
 ## 📨 Messages
@@ -239,3 +233,66 @@ The service subscribes to the following messages to the RabbitMQ server:
     <li>customer.update.details</li>
   </ul>
 </details>
+
+---
+
+<details>
+  <summary><b>Parcel-Service</b></summary>
+  <ul>
+    <li>parcel.create</li>
+  </ul>
+</details>
+
+<!-- Getting Started -->
+## 	🛠️ Getting Started
+
+<!-- Prerequisites -->
+### ‼️ Prerequisites
+
+Building the project requires Go 1.18.
+
+This project requires a PostgreSQL compatible database with a database named `delivery` and a RabbitMQ server.
+The easiest way to setup the project is to use the Docker-Compose file from the infrastructure repository.
+
+<!-- Running Tests -->
+### 🧪 Running Tests
+
+-
+
+<!-- Run Locally -->
+### 🏃 Run Locally
+
+Clone the project
+
+```bash
+  git clone https://github.com/S6-BikePack/delivery-service
+```
+
+Go to the project directory
+
+```bash
+  cd delivery-service
+```
+
+Run the project (Rest)
+
+```bash
+  go run cmd/rest/main.go
+```
+
+
+<!-- Deployment -->
+### 🚀 Deployment
+
+To build this project run (Rest)
+
+```bash
+  go build cmd/rest/main.go
+```
+
+
+<!-- Usage -->
+## 👀 Usage
+
+### REST
+Once the service is running you can find its swagger documentation with all the endpoints at `/swagger`

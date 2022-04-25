@@ -1,23 +1,33 @@
 definitions:
+  domain.Customer:
+    properties:
+      id:
+        type: string
+    type: object
   domain.Delivery:
     properties:
-      deliveryPoint:
-        $ref: '#/definitions/domain.Location'
-      deliveryTime:
-        type: string
+      customer:
+        $ref: '#/definitions/domain.Customer'
+      destination:
+        $ref: '#/definitions/domain.TimeAndPlace'
       id:
         type: string
       parcel:
         $ref: '#/definitions/domain.Parcel'
-      pickupPoint:
-        $ref: '#/definitions/domain.Location'
-      pickupTime:
-        type: string
+      pickup:
+        $ref: '#/definitions/domain.TimeAndPlace'
       rider:
         $ref: '#/definitions/domain.Rider'
-      riderId:
-        type: string
       status:
+        type: integer
+    type: object
+  domain.Dimensions:
+    properties:
+      depth:
+        type: integer
+      height:
+        type: integer
+      width:
         type: integer
     type: object
   domain.Location:
@@ -29,18 +39,29 @@ definitions:
     type: object
   domain.Parcel:
     properties:
-      delivery:
-        type: string
       id:
         type: string
-      name:
-        type: string
+      serviceArea:
+        type: integer
+      size:
+        $ref: '#/definitions/domain.Dimensions'
+      weight:
+        type: integer
     type: object
   domain.Rider:
     properties:
       id:
         type: string
-      name:
+      serviceArea:
+        type: integer
+    type: object
+  domain.TimeAndPlace:
+    properties:
+      address:
+        type: string
+      coordinates:
+        $ref: '#/definitions/domain.Location'
+      time:
         type: string
     type: object
   dto.BodyAssignRider:
@@ -50,56 +71,58 @@ definitions:
     type: object
   dto.BodyCreateDelivery:
     properties:
-      deliveryPoint:
-        $ref: '#/definitions/domain.Location'
+      destination:
+        $ref: '#/definitions/dto.BodyCreateDeliveryDestination'
+      ownerId:
+        type: string
       parcelId:
         type: string
-      pickupPoint:
+      pickup:
+        $ref: '#/definitions/dto.BodyCreateDeliveryPickup'
+    type: object
+  dto.BodyCreateDeliveryDestination:
+    properties:
+      address:
+        type: string
+      coordinates:
         $ref: '#/definitions/domain.Location'
-      pickupTime:
+    type: object
+  dto.BodyCreateDeliveryPickup:
+    properties:
+      address:
+        type: string
+      coordinates:
+        $ref: '#/definitions/domain.Location'
+      time:
         type: integer
     type: object
   dto.ResponseAssignRider:
     properties:
-      deliveryPoint:
-        $ref: '#/definitions/domain.Location'
-      deliveryTime:
-        type: string
+      customer:
+        $ref: '#/definitions/domain.Customer'
+      destination:
+        $ref: '#/definitions/domain.TimeAndPlace'
       id:
         type: string
       parcel:
         $ref: '#/definitions/domain.Parcel'
-      pickupPoint:
-        $ref: '#/definitions/domain.Location'
-      pickupTime:
-        type: string
+      pickup:
+        $ref: '#/definitions/domain.TimeAndPlace'
       rider:
         $ref: '#/definitions/domain.Rider'
-      riderId:
-        type: string
       status:
         type: integer
     type: object
   dto.ResponseCreateDelivery:
     properties:
-      deliveryPoint:
-        $ref: '#/definitions/domain.Location'
-      deliveryTime:
-        type: string
-      id:
-        type: string
+      destination:
+        $ref: '#/definitions/domain.TimeAndPlace'
+      owner:
+        $ref: '#/definitions/domain.Customer'
       parcel:
         $ref: '#/definitions/domain.Parcel'
-      pickupPoint:
-        $ref: '#/definitions/domain.Location'
-      pickupTime:
-        type: string
-      rider:
-        $ref: '#/definitions/domain.Rider'
-      riderId:
-        type: string
-      status:
-        type: integer
+      pickup:
+        $ref: '#/definitions/domain.TimeAndPlace'
     type: object
 info:
   contact: {}
@@ -197,4 +220,26 @@ paths:
           schema:
             $ref: '#/definitions/domain.Delivery'
       summary: start delivery
+  /api/deliveries/radius/{latlon}:
+    get:
+      description: gets a delivery from the system based on the distance to the given
+        point
+      parameters:
+      - description: Latitude,Longitude
+        in: path
+        name: latlon
+        required: true
+        type: string
+      - description: radius of search in meters (default = 1000)
+        in: query
+        name: radius
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/domain.Delivery'
+      summary: get delivery by distance
 swagger: "2.0"

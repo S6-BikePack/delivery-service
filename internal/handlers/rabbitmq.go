@@ -12,9 +12,10 @@ type rabbitmqHandler struct {
 	rabbitmq *rabbitmq.RabbitMQ
 	service  ports.DeliveryService
 	handlers map[string]func(topic string, body []byte, handler *rabbitmqHandler) error
+	logger   ports.LoggingService
 }
 
-func NewRabbitMQ(rabbitmq *rabbitmq.RabbitMQ, service ports.DeliveryService) *rabbitmqHandler {
+func NewRabbitMQ(rabbitmq *rabbitmq.RabbitMQ, service ports.DeliveryService, logger ports.LoggingService) *rabbitmqHandler {
 	return &rabbitmqHandler{
 		rabbitmq: rabbitmq,
 		service:  service,
@@ -23,7 +24,9 @@ func NewRabbitMQ(rabbitmq *rabbitmq.RabbitMQ, service ports.DeliveryService) *ra
 			"rider.update":            RiderCreateOrUpdate,
 			"customer.create":         CustomerCreateOrUpdate,
 			"customer.update.details": CustomerCreateOrUpdate,
+			"parcel.create":           ParcelCreateOrUpdate,
 		},
+		logger: logger,
 	}
 }
 
@@ -55,10 +58,24 @@ func CustomerCreateOrUpdate(topic string, body []byte, handler *rabbitmqHandler)
 	return nil
 }
 
-func (handler *rabbitmqHandler) Listen() {
+func ParcelCreateOrUpdate(topic string, body []byte, handler *rabbitmqHandler) error {
+	var parcel domain.Parcel
+
+	if err := json.Unmarshal(body, &parcel); err != nil {
+		return err
+	}
+
+	if err := handler.service.SaveOrUpdateParcel(parcel); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (handler *rabbitmqHandler) Listen(queue string) {
 
 	q, err := handler.rabbitmq.Channel.QueueDeclare(
-		"deliveryQueue",
+		queue,
 		true,
 		false,
 		false,
@@ -67,7 +84,7 @@ func (handler *rabbitmqHandler) Listen() {
 	)
 
 	if err != nil {
-		panic(err)
+		handler.logger.Error(err)
 	}
 
 	for _, s := range maps.Keys(handler.handlers) {
@@ -78,7 +95,7 @@ func (handler *rabbitmqHandler) Listen() {
 			false,
 			nil)
 		if err != nil {
-			return
+			handler.logger.Error(err)
 		}
 	}
 
@@ -93,7 +110,7 @@ func (handler *rabbitmqHandler) Listen() {
 	)
 
 	if err != nil {
-		panic(err)
+		handler.logger.Error(err)
 	}
 
 	forever := make(chan bool)
@@ -105,10 +122,17 @@ func (handler *rabbitmqHandler) Listen() {
 			if exist {
 				if err = fun(msg.RoutingKey, msg.Body, handler); err == nil {
 					msg.Ack(false)
+
 					continue
 				}
+
+				handler.logger.Error(err)
+				msg.Nack(false, true)
+
+				continue
 			}
 
+			handler.logger.Warnf("No handler exists for %d", msg.RoutingKey)
 			msg.Nack(false, true)
 		}
 	}()

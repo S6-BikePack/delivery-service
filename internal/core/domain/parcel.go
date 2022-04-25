@@ -1,13 +1,13 @@
 package domain
 
-import "github.com/google/uuid"
-
 type Parcel struct {
-	ID       uuid.UUID `gorm:"type:uuid"`
-	Name     string
-	Delivery uuid.UUID
+	ID          string     `json:"id"`
+	Size        Dimensions `gorm:"embedded" json:"size"`
+	Weight      int        `json:"weight"`
+	ServiceArea int        `json:"serviceArea"`
+	DeliveryId  string     `json:"-"`
 }
 
-func NewParcel(id uuid.UUID, name string) Parcel {
-	return Parcel{ID: id, Name: name}
+func NewParcel(id string, size Dimensions, weight int) Parcel {
+	return Parcel{ID: id, Size: size, Weight: weight}
 }

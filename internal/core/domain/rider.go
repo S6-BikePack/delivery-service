@@ -1,14 +1,10 @@
 package domain
 
-import (
-	"github.com/google/uuid"
-)
-
 type Rider struct {
-	ID   uuid.UUID `gorm:"type:uuid"`
-	Name string
+	ID          string `json:"id"`
+	ServiceArea int    `json:"serviceArea"`
 }
 
-func NewRider(id uuid.UUID, name string) Rider {
-	return Rider{ID: id, Name: name}
+func NewRider(id string) Rider {
+	return Rider{ID: id}
 }

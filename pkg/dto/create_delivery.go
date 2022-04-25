@@ -4,15 +4,36 @@ import (
 	"delivery-service/internal/core/domain"
 )
 
-type BodyCreateDelivery struct {
-	ParcelId      string
-	PickupPoint   domain.Location
-	DeliveryPoint domain.Location
-	PickupTime    int64
+type BodyCreateDeliveryPickup struct {
+	Coordinates domain.Location `json:"coordinates"`
+	Address     string          `json:"address"`
+	Time        int64           `json:"time"`
 }
 
-type ResponseCreateDelivery domain.Delivery
+type BodyCreateDeliveryDestination struct {
+	Coordinates domain.Location `json:"coordinates"`
+	Address     string          `json:"address"`
+}
+
+type BodyCreateDelivery struct {
+	ParcelId    string                        `json:"parcelId"`
+	OwnerId     string                        `json:"ownerId"`
+	Pickup      BodyCreateDeliveryPickup      `json:"pickup"`
+	Destination BodyCreateDeliveryDestination `json:"destination"`
+}
+
+type ResponseCreateDelivery struct {
+	Parcel      domain.Parcel       `json:"parcel"`
+	Owner       domain.Customer     `json:"owner"`
+	Pickup      domain.TimeAndPlace `json:"pickup"`
+	Destination domain.TimeAndPlace `json:"destination"`
+}
 
 func BuildResponseCreateDelivery(model domain.Delivery) ResponseCreateDelivery {
-	return ResponseCreateDelivery(model)
+	return ResponseCreateDelivery{
+		Parcel:      model.Parcel,
+		Owner:       model.Customer,
+		Pickup:      model.Pickup,
+		Destination: model.Destination,
+	}
 }

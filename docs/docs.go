@@ -68,6 +68,38 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/deliveries/radius/{latlon}": {
+            "get": {
+                "description": "gets a delivery from the system based on the distance to the given point",
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "get delivery by distance",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Latitude,Longitude",
+                        "name": "latlon",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "radius of search in meters (default = 1000)",
+                        "name": "radius",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/domain.Delivery"
+                        }
+                    }
+                }
+            }
+        },
         "/api/deliveries/{id}": {
             "get": {
                 "description": "gets a delivery from the system by its ID",
@@ -161,14 +193,22 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "domain.Customer": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                }
+            }
+        },
         "domain.Delivery": {
             "type": "object",
             "properties": {
-                "deliveryPoint": {
-                    "$ref": "#/definitions/domain.Location"
+                "customer": {
+                    "$ref": "#/definitions/domain.Customer"
                 },
-                "deliveryTime": {
-                    "type": "string"
+                "destination": {
+                    "$ref": "#/definitions/domain.TimeAndPlace"
                 },
                 "id": {
                     "type": "string"
@@ -176,19 +216,27 @@ const docTemplate = `{
                 "parcel": {
                     "$ref": "#/definitions/domain.Parcel"
                 },
-                "pickupPoint": {
-                    "$ref": "#/definitions/domain.Location"
-                },
-                "pickupTime": {
-                    "type": "string"
+                "pickup": {
+                    "$ref": "#/definitions/domain.TimeAndPlace"
                 },
                 "rider": {
                     "$ref": "#/definitions/domain.Rider"
                 },
-                "riderId": {
-                    "type": "string"
-                },
                 "status": {
+                    "type": "integer"
+                }
+            }
+        },
+        "domain.Dimensions": {
+            "type": "object",
+            "properties": {
+                "depth": {
+                    "type": "integer"
+                },
+                "height": {
+                    "type": "integer"
+                },
+                "width": {
                     "type": "integer"
                 }
             }
@@ -207,14 +255,17 @@ const docTemplate = `{
         "domain.Parcel": {
             "type": "object",
             "properties": {
-                "delivery": {
-                    "type": "string"
-                },
                 "id": {
                     "type": "string"
                 },
-                "name": {
-                    "type": "string"
+                "serviceArea": {
+                    "type": "integer"
+                },
+                "size": {
+                    "$ref": "#/definitions/domain.Dimensions"
+                },
+                "weight": {
+                    "type": "integer"
                 }
             }
         },
@@ -224,7 +275,21 @@ const docTemplate = `{
                 "id": {
                     "type": "string"
                 },
-                "name": {
+                "serviceArea": {
+                    "type": "integer"
+                }
+            }
+        },
+        "domain.TimeAndPlace": {
+            "type": "object",
+            "properties": {
+                "address": {
+                    "type": "string"
+                },
+                "coordinates": {
+                    "$ref": "#/definitions/domain.Location"
+                },
+                "time": {
                     "type": "string"
                 }
             }
@@ -240,16 +305,41 @@ const docTemplate = `{
         "dto.BodyCreateDelivery": {
             "type": "object",
             "properties": {
-                "deliveryPoint": {
-                    "$ref": "#/definitions/domain.Location"
+                "destination": {
+                    "$ref": "#/definitions/dto.BodyCreateDeliveryDestination"
+                },
+                "ownerId": {
+                    "type": "string"
                 },
                 "parcelId": {
                     "type": "string"
                 },
-                "pickupPoint": {
+                "pickup": {
+                    "$ref": "#/definitions/dto.BodyCreateDeliveryPickup"
+                }
+            }
+        },
+        "dto.BodyCreateDeliveryDestination": {
+            "type": "object",
+            "properties": {
+                "address": {
+                    "type": "string"
+                },
+                "coordinates": {
+                    "$ref": "#/definitions/domain.Location"
+                }
+            }
+        },
+        "dto.BodyCreateDeliveryPickup": {
+            "type": "object",
+            "properties": {
+                "address": {
+                    "type": "string"
+                },
+                "coordinates": {
                     "$ref": "#/definitions/domain.Location"
                 },
-                "pickupTime": {
+                "time": {
                     "type": "integer"
                 }
             }
@@ -257,11 +347,11 @@ const docTemplate = `{
         "dto.ResponseAssignRider": {
             "type": "object",
             "properties": {
-                "deliveryPoint": {
-                    "$ref": "#/definitions/domain.Location"
+                "customer": {
+                    "$ref": "#/definitions/domain.Customer"
                 },
-                "deliveryTime": {
-                    "type": "string"
+                "destination": {
+                    "$ref": "#/definitions/domain.TimeAndPlace"
                 },
                 "id": {
                     "type": "string"
@@ -269,17 +359,11 @@ const docTemplate = `{
                 "parcel": {
                     "$ref": "#/definitions/domain.Parcel"
                 },
-                "pickupPoint": {
-                    "$ref": "#/definitions/domain.Location"
-                },
-                "pickupTime": {
-                    "type": "string"
+                "pickup": {
+                    "$ref": "#/definitions/domain.TimeAndPlace"
                 },
                 "rider": {
                     "$ref": "#/definitions/domain.Rider"
-                },
-                "riderId": {
-                    "type": "string"
                 },
                 "status": {
                     "type": "integer"
@@ -289,32 +373,17 @@ const docTemplate = `{
         "dto.ResponseCreateDelivery": {
             "type": "object",
             "properties": {
-                "deliveryPoint": {
-                    "$ref": "#/definitions/domain.Location"
+                "destination": {
+                    "$ref": "#/definitions/domain.TimeAndPlace"
                 },
-                "deliveryTime": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "string"
+                "owner": {
+                    "$ref": "#/definitions/domain.Customer"
                 },
                 "parcel": {
                     "$ref": "#/definitions/domain.Parcel"
                 },
-                "pickupPoint": {
-                    "$ref": "#/definitions/domain.Location"
-                },
-                "pickupTime": {
-                    "type": "string"
-                },
-                "rider": {
-                    "$ref": "#/definitions/domain.Rider"
-                },
-                "riderId": {
-                    "type": "string"
-                },
-                "status": {
-                    "type": "integer"
+                "pickup": {
+                    "$ref": "#/definitions/domain.TimeAndPlace"
                 }
             }
         }
