@@ -31,7 +31,7 @@ func (srv *service) GetByDistance(location domain.Location, radius int) []domain
 	return srv.deliveryRepository.GetWithinRadius(location, radius)
 }
 
-func (srv *service) Create(parcelId, ownerId string, pickupPoint, deliveryPoint domain.Location, pickupTime time.Time) (domain.Delivery, error) {
+func (srv *service) Create(parcelId, ownerId string, pickup, destination domain.TimeAndPlace) (domain.Delivery, error) {
 	owner, err := srv.deliveryRepository.GetCustomer(ownerId)
 
 	if err != nil {
@@ -48,7 +48,7 @@ func (srv *service) Create(parcelId, ownerId string, pickupPoint, deliveryPoint 
 		return domain.Delivery{}, errors.New("parcel is already part of a delivery")
 	}
 
-	delivery, err := domain.NewDelivery(parcel, owner, pickupPoint, deliveryPoint, pickupTime)
+	delivery, err := domain.NewDelivery(parcel, owner, pickup, destination)
 
 	if err != nil {
 		return domain.Delivery{}, err
@@ -102,7 +102,6 @@ func (srv *service) StartDelivery(id string) (domain.Delivery, error) {
 	}
 
 	delivery.Status = 2
-	delivery.DeliveryTime = time.Now()
 
 	delivery, err = srv.deliveryRepository.Update(delivery)
 
@@ -121,8 +120,8 @@ func (srv *service) CompleteDelivery(id string) (domain.Delivery, error) {
 		return domain.Delivery{}, errors.New("could not find delivery with id")
 	}
 
-	delivery.Status = 2
-	delivery.DeliveryTime = time.Now()
+	delivery.Status = 3
+	delivery.Destination.Time = time.Now()
 
 	delivery, err = srv.deliveryRepository.Update(delivery)
 
@@ -139,7 +138,7 @@ func (srv *service) GetRider(id string) (domain.Rider, error) {
 }
 
 func (srv *service) SaveOrUpdateRider(rider domain.Rider) error {
-	if rider.Name == "" || rider.ID == "" {
+	if rider.ID == "" {
 		return errors.New("incomplete rider data")
 	}
 
@@ -159,7 +158,7 @@ func (srv *service) SaveOrUpdateCustomer(customer domain.Customer) error {
 }
 
 func (srv *service) SaveOrUpdateParcel(parcel domain.Parcel) error {
-	if parcel.Name == "" || parcel.Size == (domain.Dimensions{}) || parcel.ID == "" {
+	if parcel.Size == (domain.Dimensions{}) || parcel.ID == "" {
 		return errors.New("incomplete parcel data")
 	}
 

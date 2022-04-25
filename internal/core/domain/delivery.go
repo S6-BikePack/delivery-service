@@ -6,41 +6,36 @@ import (
 )
 
 type Delivery struct {
-	ID            string `gorm:"default:uuid_generate_v4()"`
-	ParcelId      string
-	Parcel        Parcel `gorm:"foreignKey:DeliveryId"`
-	RiderId       string
-	Rider         Rider `gorm:"foreignKey:RiderId"`
-	CustomerId    string
-	Customer      Customer `gorm:"foreignKey:CustomerId"`
-	PickupPoint   Location
-	PickupTime    time.Time
-	DeliveryPoint Location
-	DeliveryTime  time.Time
-	Status        int
+	ID          string       `gorm:"default:uuid_generate_v4()" json:"id"`
+	Parcel      Parcel       `gorm:"foreignKey:DeliveryId" json:"parcel"`
+	RiderId     string       `json:"-"`
+	Rider       Rider        `gorm:"foreignKey:RiderId" json:"rider"`
+	CustomerId  string       `json:"-"`
+	Customer    Customer     `gorm:"foreignKey:CustomerId" json:"customer"`
+	Pickup      TimeAndPlace `gorm:"embedded;embeddedPrefix:pickup_" json:"pickup"`
+	Destination TimeAndPlace `gorm:"embedded;embeddedPrefix:destination_" json:"destination"`
+	Status      int          `json:"status"`
 }
 
-func NewDelivery(parcel Parcel, owner Customer, pickupPoint, deliveryPoint Location, pickupTime time.Time) (Delivery, error) {
-
+func NewDelivery(parcel Parcel, owner Customer, pickup, destination TimeAndPlace) (Delivery, error) {
 	if (parcel == Parcel{}) {
 		return Delivery{}, errors.New("parcel can not be empty")
 	}
 
-	if (pickupTime == time.Time{}) {
-		return Delivery{}, errors.New("pickup time can not be empty")
+	if (destination == TimeAndPlace{} || pickup == TimeAndPlace{}) {
+		return Delivery{}, errors.New("pickup or destination locations can not be empty")
 	}
 
-	if (deliveryPoint == Location{} || pickupPoint == Location{}) {
-		return Delivery{}, errors.New("location can not be empty")
+	if pickup.Time.Before(time.Now()) {
+		return Delivery{}, errors.New("pickup time can not be in the past")
 	}
 
 	delivery := Delivery{
-		Parcel:        parcel,
-		Customer:      owner,
-		PickupPoint:   pickupPoint,
-		PickupTime:    pickupTime,
-		DeliveryPoint: deliveryPoint,
-		Status:        0,
+		Parcel:      parcel,
+		Customer:    owner,
+		Pickup:      pickup,
+		Destination: destination,
+		Status:      0,
 	}
 
 	return delivery, nil

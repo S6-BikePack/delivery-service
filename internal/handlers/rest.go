@@ -1,19 +1,18 @@
 package handlers
 
 import (
+	"delivery-service/docs"
+	_ "delivery-service/docs"
 	"delivery-service/internal/core/domain"
 	"delivery-service/internal/core/ports"
 	"delivery-service/pkg/dto"
 	"github.com/gin-gonic/gin"
+	ginSwagger "github.com/swaggo/gin-swagger"
 	"github.com/swaggo/gin-swagger/swaggerFiles"
 	"net/http"
 	"strconv"
 	"strings"
 	"time"
-
-	"delivery-service/docs"
-	_ "delivery-service/docs"
-	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
 type restHandler struct {
@@ -64,7 +63,7 @@ func (handler *restHandler) GetAll(c *gin.Context) {
 		return
 	}
 
-	c.JSON(200, deliveries)
+	c.JSON(200, dto.CreateDeliveryListResponse(deliveries))
 }
 
 // Get godoc
@@ -83,7 +82,7 @@ func (handler *restHandler) Get(c *gin.Context) {
 		return
 	}
 
-	c.JSON(200, dto.BuildResponseCreateDelivery(delivery))
+	c.JSON(200, dto.CreateDeliveryResponse(delivery))
 }
 
 // GetByDistance godoc
@@ -130,7 +129,7 @@ func (handler *restHandler) GetByDistance(c *gin.Context) {
 
 	deliveries := handler.deliveryService.GetByDistance(location, int(radius))
 
-	c.JSON(200, deliveries)
+	c.JSON(200, dto.CreateDeliveryListResponse(deliveries))
 }
 
 // Create godoc
@@ -148,20 +147,33 @@ func (handler *restHandler) Create(c *gin.Context) {
 
 	if err != nil {
 		handler.logger.Error(err)
-		c.AbortWithStatus(500)
+		c.AbortWithStatus(http.StatusBadRequest)
 	}
 
-	pickupTime := time.Unix(body.PickupTime, 0)
-
-	delivery, err := handler.deliveryService.Create(body.ParcelId, body.OwnerId, body.PickupPoint, body.DeliveryPoint, pickupTime)
+	pickup, err := domain.NewTimeAndPlace(body.Pickup.Address, body.Pickup.Coordinates)
+	pickup.Time = time.Unix(body.Pickup.Time, 0)
 
 	if err != nil {
 		handler.logger.Error(err)
-		c.AbortWithStatusJSON(500, gin.H{"message": err.Error()})
+		c.AbortWithStatus(http.StatusBadRequest)
+	}
+
+	destination, err := domain.NewTimeAndPlace(body.Destination.Address, body.Destination.Coordinates)
+
+	if err != nil {
+		handler.logger.Error(err)
+		c.AbortWithStatus(http.StatusBadRequest)
+	}
+
+	delivery, err := handler.deliveryService.Create(body.ParcelId, body.OwnerId, pickup, destination)
+
+	if err != nil {
+		handler.logger.Error(err)
+		c.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
 
-	c.JSON(200, delivery)
+	c.JSON(200, dto.CreateDeliveryResponse(delivery))
 }
 
 // AssignRider godoc
@@ -190,7 +202,7 @@ func (handler *restHandler) AssignRider(c *gin.Context) {
 		return
 	}
 
-	c.JSON(200, dto.BuildResponseCreateDelivery(delivery))
+	c.JSON(200, dto.CreateDeliveryResponse(delivery))
 }
 
 // StartDelivery godoc
@@ -209,7 +221,7 @@ func (handler *restHandler) StartDelivery(c *gin.Context) {
 		return
 	}
 
-	c.JSON(200, delivery)
+	c.JSON(200, dto.CreateDeliveryResponse(delivery))
 }
 
 // CompleteDelivery godoc
@@ -228,5 +240,5 @@ func (handler *restHandler) CompleteDelivery(c *gin.Context) {
 		return
 	}
 
-	c.JSON(200, delivery)
+	c.JSON(200, dto.CreateDeliveryResponse(delivery))
 }

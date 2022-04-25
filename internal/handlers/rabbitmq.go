@@ -25,7 +25,6 @@ func NewRabbitMQ(rabbitmq *rabbitmq.RabbitMQ, service ports.DeliveryService, log
 			"customer.create":         CustomerCreateOrUpdate,
 			"customer.update.details": CustomerCreateOrUpdate,
 			"parcel.create":           ParcelCreateOrUpdate,
-			"parcel.update.status":    ParcelCreateOrUpdate,
 		},
 		logger: logger,
 	}

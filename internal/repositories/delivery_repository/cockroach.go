@@ -44,7 +44,7 @@ func (repository *cockroachdb) GetAll() ([]domain.Delivery, error) {
 func (repository *cockroachdb) GetWithinRadius(location domain.Location, radius int) []domain.Delivery {
 	var deliveries []domain.Delivery
 
-	repository.Connection.Raw("SELECT * FROM deliveries WHERE st_distancesphere(pickup_point, ST_MakePoint(?, ?)) <= ?", location.Longitude, location.Latitude, radius).Scan(&deliveries)
+	repository.Connection.Preload(clause.Associations).Where("st_distancesphere(pickup_coordinates, ST_MakePoint(?, ?)) <= ?", location.Longitude, location.Latitude, radius).Find(&deliveries)
 
 	if deliveries == nil {
 		return []domain.Delivery{}

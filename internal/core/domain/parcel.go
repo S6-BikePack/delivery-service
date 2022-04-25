@@ -1,13 +1,12 @@
 package domain
 
 type Parcel struct {
-	ID         string
-	Name       string
-	Size       Dimensions `gorm:"embedded"`
-	Weight     int
-	DeliveryId string
+	ID         string     `json:"id"`
+	Size       Dimensions `gorm:"embedded" json:"size"`
+	Weight     int        `json:"weight"`
+	DeliveryId string     `json:"-"`
 }
 
-func NewParcel(id string, name string, size Dimensions, weight int) Parcel {
-	return Parcel{ID: id, Name: name, Size: size, Weight: weight}
+func NewParcel(id string, size Dimensions, weight int) Parcel {
+	return Parcel{ID: id, Size: size, Weight: weight}
 }

@@ -1,7 +1,7 @@
 package domain
 
 type Dimensions struct {
-	Width  int
-	Height int
-	Depth  int
+	Width  int `json:"width"`
+	Height int `json:"height"`
+	Depth  int `json:"depth"`
 }

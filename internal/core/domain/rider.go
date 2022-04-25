@@ -1,10 +1,9 @@
 package domain
 
 type Rider struct {
-	ID   string
-	Name string
+	ID string `json:"id"`
 }
 
-func NewRider(id string, name string) Rider {
-	return Rider{ID: id, Name: name}
+func NewRider(id string) Rider {
+	return Rider{ID: id}
 }
