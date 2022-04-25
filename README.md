@@ -93,7 +93,6 @@ This service stores the following data:
   "ID": "string",
   "Parcel": {
     "ID": "string",
-    "Name": "string",
     "Size": {
       "Width": "int",
       "Height": "int",
@@ -104,23 +103,28 @@ This service stores the following data:
   },
   "Rider": {
     "ID": "string",
-    "Name": "string"
+    "ServiceArea": "int"
   },
   "Customer": {
     "ID": "string",
-    "Name": "string",
     "ServiceArea": "int"
   },
-  "PickupPoint": {
-    "Latitude": "float64",
-    "Longitude": "float64"
+  "Pickup": {
+    "Coordinates": {
+      "Latitude": "float64",
+      "Longitude": "float64"
+    },
+    "Address": "string",
+    "Time": "time"
   },
-  "PickupTime": "DateTime",
-  "DeliveryPoint": {
-    "Latitude": "float64",
-    "Longitude": "float64"
+  "Destination": {
+    "Coordinates": {
+      "Latitude": "float64",
+      "Longitude": "float64"
+    },
+    "Address": "string",
+    "Time": "time"
   },
-  "DeliveryTime": "DateTime",
   "Status": "int"
 }
 ```
@@ -236,7 +240,6 @@ The service subscribes to the following messages to the RabbitMQ server:
   <summary><b>Parcel-Service</b></summary>
   <ul>
     <li>parcel.create</li>
-    <li>parcel.update.status</li>
   </ul>
 </details>
 
