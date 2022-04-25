@@ -4,7 +4,7 @@ import (
 	"delivery-service/docs"
 	_ "delivery-service/docs"
 	"delivery-service/internal/core/domain"
-	"delivery-service/internal/core/ports"
+	"delivery-service/internal/core/interfaces"
 	"delivery-service/pkg/dto"
 	"github.com/gin-gonic/gin"
 	ginSwagger "github.com/swaggo/gin-swagger"
@@ -16,12 +16,12 @@ import (
 )
 
 type restHandler struct {
-	deliveryService ports.DeliveryService
+	deliveryService interfaces.DeliveryService
 	router          *gin.Engine
-	logger          ports.LoggingService
+	logger          interfaces.LoggingService
 }
 
-func NewRest(deliveryService ports.DeliveryService, router *gin.Engine, logger ports.LoggingService) *restHandler {
+func NewRest(deliveryService interfaces.DeliveryService, router *gin.Engine, logger interfaces.LoggingService) *restHandler {
 	return &restHandler{
 		deliveryService: deliveryService,
 		router:          router,
@@ -41,10 +41,10 @@ func (handler *restHandler) SetupEndpoints() {
 }
 
 func (handler *restHandler) SetupSwagger() {
-	docs.SwaggerInfo.Title = "Delivery service API"
-	docs.SwaggerInfo.Description = "The delivery service manages all deliveries for the BikePack system."
+	docs.SwaggerInfo.Title = "Delivery deliveryService API"
+	docs.SwaggerInfo.Description = "The delivery deliveryService manages all deliveries for the BikePack system."
 
-	handler.router.GET("/delivery-service/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+	handler.router.GET("/delivery-deliveryService/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 }
 
 // GetAll godoc

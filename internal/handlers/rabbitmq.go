@@ -2,26 +2,29 @@ package handlers
 
 import (
 	"delivery-service/internal/core/domain"
-	"delivery-service/internal/core/ports"
+	"delivery-service/internal/core/interfaces"
 	"delivery-service/pkg/rabbitmq"
 	"encoding/json"
 	"golang.org/x/exp/maps"
 )
 
 type rabbitmqHandler struct {
-	rabbitmq *rabbitmq.RabbitMQ
-	service  ports.DeliveryService
-	handlers map[string]func(topic string, body []byte, handler *rabbitmqHandler) error
-	logger   ports.LoggingService
+	rabbitmq        *rabbitmq.RabbitMQ
+	deliveryService interfaces.DeliveryService
+	riderService    interfaces.RiderService
+	handlers        map[string]func(topic string, body []byte, handler *rabbitmqHandler) error
+	logger          interfaces.LoggingService
 }
 
-func NewRabbitMQ(rabbitmq *rabbitmq.RabbitMQ, service ports.DeliveryService, logger ports.LoggingService) *rabbitmqHandler {
+func NewRabbitMQ(rabbitmq *rabbitmq.RabbitMQ, deliveryService interfaces.DeliveryService, riderService interfaces.RiderService, logger interfaces.LoggingService) *rabbitmqHandler {
 	return &rabbitmqHandler{
-		rabbitmq: rabbitmq,
-		service:  service,
+		rabbitmq:        rabbitmq,
+		deliveryService: deliveryService,
+		riderService:    riderService,
 		handlers: map[string]func(topic string, body []byte, handler *rabbitmqHandler) error{
-			"rider.create":            RiderCreateOrUpdate,
-			"rider.update":            RiderCreateOrUpdate,
+			"rider.create":            RiderCreate,
+			"rider.update":            RiderUpdate,
+			"rider.update.location":   RiderUpdateLocation,
 			"customer.create":         CustomerCreateOrUpdate,
 			"customer.update.details": CustomerCreateOrUpdate,
 			"parcel.create":           ParcelCreateOrUpdate,
@@ -30,14 +33,45 @@ func NewRabbitMQ(rabbitmq *rabbitmq.RabbitMQ, service ports.DeliveryService, log
 	}
 }
 
-func RiderCreateOrUpdate(topic string, body []byte, handler *rabbitmqHandler) error {
+func RiderCreate(topic string, body []byte, handler *rabbitmqHandler) error {
 	var rider domain.Rider
 
 	if err := json.Unmarshal(body, &rider); err != nil {
 		return err
 	}
 
-	if err := handler.service.SaveOrUpdateRider(rider); err != nil {
+	if _, err := handler.riderService.Create(rider.ID, rider.Name, rider.ServiceArea); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func RiderUpdate(topic string, body []byte, handler *rabbitmqHandler) error {
+	var rider domain.Rider
+
+	if err := json.Unmarshal(body, &rider); err != nil {
+		return err
+	}
+
+	if _, err := handler.riderService.Update(rider); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func RiderUpdateLocation(topic string, body []byte, handler *rabbitmqHandler) error {
+	message := struct {
+		id       string
+		location domain.Location
+	}{}
+
+	if err := json.Unmarshal(body, &message); err != nil {
+		return err
+	}
+
+	if err := handler.riderService.UpdateLocation(message.id, message.location); err != nil {
 		return err
 	}
 
@@ -51,7 +85,7 @@ func CustomerCreateOrUpdate(topic string, body []byte, handler *rabbitmqHandler)
 		return err
 	}
 
-	if err := handler.service.SaveOrUpdateCustomer(customer); err != nil {
+	if err := handler.deliveryService.SaveOrUpdateCustomer(customer); err != nil {
 		return err
 	}
 
@@ -65,7 +99,7 @@ func ParcelCreateOrUpdate(topic string, body []byte, handler *rabbitmqHandler) e
 		return err
 	}
 
-	if err := handler.service.SaveOrUpdateParcel(parcel); err != nil {
+	if err := handler.deliveryService.SaveOrUpdateParcel(parcel); err != nil {
 		return err
 	}
 

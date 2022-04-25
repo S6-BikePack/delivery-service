@@ -1,11 +1,11 @@
 package main
 
 import (
-	"delivery-service/internal/core/services/delivery_service"
+	"delivery-service/internal/core/services"
 	"delivery-service/internal/core/services/logging_service"
 	"delivery-service/internal/core/services/rabbitmq_service"
 	"delivery-service/internal/handlers"
-	"delivery-service/internal/repositories/delivery_repository"
+	"delivery-service/internal/repositories"
 	"delivery-service/pkg/rabbitmq"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -30,7 +30,13 @@ func main() {
 		logger.Fatal(err)
 	}
 
-	deliveryRepository, err := delivery_repository.NewCockroachDB(db)
+	deliveryRepository, err := repositories.NewDeliveryRepository(db)
+
+	if err != nil {
+		logger.Fatal(err)
+	}
+
+	riderRepostory, err := repositories.NewRiderRepository(db)
 
 	if err != nil {
 		logger.Fatal(err)
@@ -46,9 +52,10 @@ func main() {
 
 	rmqPublisher := rabbitmq_service.NewRabbitMQPublisher(rmqServer)
 
-	deliveryService := delivery_service.New(deliveryRepository, rmqPublisher)
+	riderService := services.NewRiderService(riderRepostory, rmqPublisher)
+	deliveryService := services.NewDeliveryService(deliveryRepository, rmqPublisher, riderService)
 
-	rmqSubscriber := handlers.NewRabbitMQ(rmqServer, deliveryService, logger)
+	rmqSubscriber := handlers.NewRabbitMQ(rmqServer, deliveryService, riderService, logger)
 
 	router := gin.New()
 

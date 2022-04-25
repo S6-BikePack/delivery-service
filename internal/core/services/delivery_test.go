@@ -1,4 +1,4 @@
-package delivery_service
+package services
 
 import (
 	"delivery-service/internal/core/domain"
@@ -95,7 +95,9 @@ type DeliveryServiceTestSuite struct {
 func (suite *DeliveryServiceTestSuite) Test_GetAll() {
 	mockRepository := new(mocks.DeliveryRepository)
 	mockMessageBus := new(mocks.MessageBusPublisher)
-	sut := New(mockRepository, mockMessageBus)
+
+	riderService := NewRiderService(mockRepository, mockMessageBus)
+	sut := NewDeliveryService(mockRepository, mockMessageBus, riderService)
 
 	mockRepository.On("GetAll").Return(MockDeliveries(), nil)
 
@@ -109,7 +111,8 @@ func (suite *DeliveryServiceTestSuite) Test_Get() {
 	mockRepository := new(mocks.DeliveryRepository)
 	mockMessageBus := new(mocks.MessageBusPublisher)
 
-	sut := New(mockRepository, mockMessageBus)
+	riderService := NewRiderService(mockRepository, mockMessageBus)
+	sut := NewDeliveryService(mockRepository, mockMessageBus, riderService)
 	id := "delivery-1"
 
 	mockRepository.On("Get", id).Return(domain.Delivery{ID: id}, nil)
@@ -123,7 +126,8 @@ func (suite *DeliveryServiceTestSuite) Test_GetByDistance() {
 	mockRepository := new(mocks.DeliveryRepository)
 	mockMessageBus := new(mocks.MessageBusPublisher)
 
-	sut := New(mockRepository, mockMessageBus)
+	riderService := NewRiderService(mockRepository, mockMessageBus)
+	sut := NewDeliveryService(mockRepository, mockMessageBus, riderService)
 
 	location := domain.Location{
 		Latitude:  1,
