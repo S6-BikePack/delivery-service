@@ -7,7 +7,7 @@ import (
 )
 
 func TestNewDelivery(t *testing.T) {
-	deliveryTime := time.Now().Add(10)
+	deliveryTime := time.Now().Add(time.Hour)
 
 	type args struct {
 		parcel      Parcel
