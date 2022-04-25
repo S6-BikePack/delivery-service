@@ -84,8 +84,7 @@ const docTemplate = `{
                         "required": true
                     },
                     {
-                        "type": "string",
-                        "format": "number",
+                        "type": "integer",
                         "description": "radius of search in meters (default = 1000)",
                         "name": "radius",
                         "in": "query"
@@ -199,12 +198,6 @@ const docTemplate = `{
             "properties": {
                 "id": {
                     "type": "string"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "serviceArea": {
-                    "type": "integer"
                 }
             }
         },
@@ -214,14 +207,8 @@ const docTemplate = `{
                 "customer": {
                     "$ref": "#/definitions/domain.Customer"
                 },
-                "customerId": {
-                    "type": "string"
-                },
-                "deliveryPoint": {
-                    "$ref": "#/definitions/domain.Location"
-                },
-                "deliveryTime": {
-                    "type": "string"
+                "destination": {
+                    "$ref": "#/definitions/domain.TimeAndPlace"
                 },
                 "id": {
                     "type": "string"
@@ -229,20 +216,11 @@ const docTemplate = `{
                 "parcel": {
                     "$ref": "#/definitions/domain.Parcel"
                 },
-                "parcelId": {
-                    "type": "string"
-                },
-                "pickupPoint": {
-                    "$ref": "#/definitions/domain.Location"
-                },
-                "pickupTime": {
-                    "type": "string"
+                "pickup": {
+                    "$ref": "#/definitions/domain.TimeAndPlace"
                 },
                 "rider": {
                     "$ref": "#/definitions/domain.Rider"
-                },
-                "riderId": {
-                    "type": "string"
                 },
                 "status": {
                     "type": "integer"
@@ -277,14 +255,11 @@ const docTemplate = `{
         "domain.Parcel": {
             "type": "object",
             "properties": {
-                "deliveryId": {
-                    "type": "string"
-                },
                 "id": {
                     "type": "string"
                 },
-                "name": {
-                    "type": "string"
+                "serviceArea": {
+                    "type": "integer"
                 },
                 "size": {
                     "$ref": "#/definitions/domain.Dimensions"
@@ -300,7 +275,21 @@ const docTemplate = `{
                 "id": {
                     "type": "string"
                 },
-                "name": {
+                "serviceArea": {
+                    "type": "integer"
+                }
+            }
+        },
+        "domain.TimeAndPlace": {
+            "type": "object",
+            "properties": {
+                "address": {
+                    "type": "string"
+                },
+                "coordinates": {
+                    "$ref": "#/definitions/domain.Location"
+                },
+                "time": {
                     "type": "string"
                 }
             }
@@ -316,8 +305,8 @@ const docTemplate = `{
         "dto.BodyCreateDelivery": {
             "type": "object",
             "properties": {
-                "deliveryPoint": {
-                    "$ref": "#/definitions/domain.Location"
+                "destination": {
+                    "$ref": "#/definitions/dto.BodyCreateDeliveryDestination"
                 },
                 "ownerId": {
                     "type": "string"
@@ -325,10 +314,32 @@ const docTemplate = `{
                 "parcelId": {
                     "type": "string"
                 },
-                "pickupPoint": {
+                "pickup": {
+                    "$ref": "#/definitions/dto.BodyCreateDeliveryPickup"
+                }
+            }
+        },
+        "dto.BodyCreateDeliveryDestination": {
+            "type": "object",
+            "properties": {
+                "address": {
+                    "type": "string"
+                },
+                "coordinates": {
+                    "$ref": "#/definitions/domain.Location"
+                }
+            }
+        },
+        "dto.BodyCreateDeliveryPickup": {
+            "type": "object",
+            "properties": {
+                "address": {
+                    "type": "string"
+                },
+                "coordinates": {
                     "$ref": "#/definitions/domain.Location"
                 },
-                "pickupTime": {
+                "time": {
                     "type": "integer"
                 }
             }
@@ -339,14 +350,8 @@ const docTemplate = `{
                 "customer": {
                     "$ref": "#/definitions/domain.Customer"
                 },
-                "customerId": {
-                    "type": "string"
-                },
-                "deliveryPoint": {
-                    "$ref": "#/definitions/domain.Location"
-                },
-                "deliveryTime": {
-                    "type": "string"
+                "destination": {
+                    "$ref": "#/definitions/domain.TimeAndPlace"
                 },
                 "id": {
                     "type": "string"
@@ -354,20 +359,11 @@ const docTemplate = `{
                 "parcel": {
                     "$ref": "#/definitions/domain.Parcel"
                 },
-                "parcelId": {
-                    "type": "string"
-                },
-                "pickupPoint": {
-                    "$ref": "#/definitions/domain.Location"
-                },
-                "pickupTime": {
-                    "type": "string"
+                "pickup": {
+                    "$ref": "#/definitions/domain.TimeAndPlace"
                 },
                 "rider": {
                     "$ref": "#/definitions/domain.Rider"
-                },
-                "riderId": {
-                    "type": "string"
                 },
                 "status": {
                     "type": "integer"
@@ -377,8 +373,8 @@ const docTemplate = `{
         "dto.ResponseCreateDelivery": {
             "type": "object",
             "properties": {
-                "deliveryPoint": {
-                    "$ref": "#/definitions/domain.Location"
+                "destination": {
+                    "$ref": "#/definitions/domain.TimeAndPlace"
                 },
                 "owner": {
                     "$ref": "#/definitions/domain.Customer"
@@ -386,11 +382,8 @@ const docTemplate = `{
                 "parcel": {
                     "$ref": "#/definitions/domain.Parcel"
                 },
-                "pickupPoint": {
-                    "$ref": "#/definitions/domain.Location"
-                },
-                "pickupTime": {
-                    "type": "integer"
+                "pickup": {
+                    "$ref": "#/definitions/domain.TimeAndPlace"
                 }
             }
         }

@@ -3,35 +3,21 @@ definitions:
     properties:
       id:
         type: string
-      name:
-        type: string
-      serviceArea:
-        type: integer
     type: object
   domain.Delivery:
     properties:
       customer:
         $ref: '#/definitions/domain.Customer'
-      customerId:
-        type: string
-      deliveryPoint:
-        $ref: '#/definitions/domain.Location'
-      deliveryTime:
-        type: string
+      destination:
+        $ref: '#/definitions/domain.TimeAndPlace'
       id:
         type: string
       parcel:
         $ref: '#/definitions/domain.Parcel'
-      parcelId:
-        type: string
-      pickupPoint:
-        $ref: '#/definitions/domain.Location'
-      pickupTime:
-        type: string
+      pickup:
+        $ref: '#/definitions/domain.TimeAndPlace'
       rider:
         $ref: '#/definitions/domain.Rider'
-      riderId:
-        type: string
       status:
         type: integer
     type: object
@@ -53,12 +39,10 @@ definitions:
     type: object
   domain.Parcel:
     properties:
-      deliveryId:
-        type: string
       id:
         type: string
-      name:
-        type: string
+      serviceArea:
+        type: integer
       size:
         $ref: '#/definitions/domain.Dimensions'
       weight:
@@ -68,7 +52,16 @@ definitions:
     properties:
       id:
         type: string
-      name:
+      serviceArea:
+        type: integer
+    type: object
+  domain.TimeAndPlace:
+    properties:
+      address:
+        type: string
+      coordinates:
+        $ref: '#/definitions/domain.Location'
+      time:
         type: string
     type: object
   dto.BodyAssignRider:
@@ -78,56 +71,58 @@ definitions:
     type: object
   dto.BodyCreateDelivery:
     properties:
-      deliveryPoint:
-        $ref: '#/definitions/domain.Location'
+      destination:
+        $ref: '#/definitions/dto.BodyCreateDeliveryDestination'
       ownerId:
         type: string
       parcelId:
         type: string
-      pickupPoint:
+      pickup:
+        $ref: '#/definitions/dto.BodyCreateDeliveryPickup'
+    type: object
+  dto.BodyCreateDeliveryDestination:
+    properties:
+      address:
+        type: string
+      coordinates:
         $ref: '#/definitions/domain.Location'
-      pickupTime:
+    type: object
+  dto.BodyCreateDeliveryPickup:
+    properties:
+      address:
+        type: string
+      coordinates:
+        $ref: '#/definitions/domain.Location'
+      time:
         type: integer
     type: object
   dto.ResponseAssignRider:
     properties:
       customer:
         $ref: '#/definitions/domain.Customer'
-      customerId:
-        type: string
-      deliveryPoint:
-        $ref: '#/definitions/domain.Location'
-      deliveryTime:
-        type: string
+      destination:
+        $ref: '#/definitions/domain.TimeAndPlace'
       id:
         type: string
       parcel:
         $ref: '#/definitions/domain.Parcel'
-      parcelId:
-        type: string
-      pickupPoint:
-        $ref: '#/definitions/domain.Location'
-      pickupTime:
-        type: string
+      pickup:
+        $ref: '#/definitions/domain.TimeAndPlace'
       rider:
         $ref: '#/definitions/domain.Rider'
-      riderId:
-        type: string
       status:
         type: integer
     type: object
   dto.ResponseCreateDelivery:
     properties:
-      deliveryPoint:
-        $ref: '#/definitions/domain.Location'
+      destination:
+        $ref: '#/definitions/domain.TimeAndPlace'
       owner:
         $ref: '#/definitions/domain.Customer'
       parcel:
         $ref: '#/definitions/domain.Parcel'
-      pickupPoint:
-        $ref: '#/definitions/domain.Location'
-      pickupTime:
-        type: integer
+      pickup:
+        $ref: '#/definitions/domain.TimeAndPlace'
     type: object
 info:
   contact: {}
@@ -236,10 +231,9 @@ paths:
         required: true
         type: string
       - description: radius of search in meters (default = 1000)
-        format: number
         in: query
         name: radius
-        type: string
+        type: integer
       produces:
       - application/json
       responses:
