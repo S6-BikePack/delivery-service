@@ -16,11 +16,10 @@ type DeliveriesResponseTimeAndPlace struct {
 }
 
 type DeliveriesResponse struct {
-	ID          string                         `json:"id"`
-	Parcel      DeliveriesResponseParcel       `json:"parcel"`
-	Pickup      DeliveriesResponseTimeAndPlace `json:"pickup"`
-	Destination DeliveriesResponseTimeAndPlace `json:"destination"`
-	Status      int                            `json:"status"`
+	ID     string                         `json:"id"`
+	Parcel DeliveriesResponseParcel       `json:"parcel"`
+	Pickup DeliveriesResponseTimeAndPlace `json:"pickup"`
+	Status int                            `json:"status"`
 }
 
 func CreateDeliveriesResponse(delivery domain.Delivery) DeliveriesResponse {
@@ -33,10 +32,6 @@ func CreateDeliveriesResponse(delivery domain.Delivery) DeliveriesResponse {
 		Pickup: DeliveriesResponseTimeAndPlace{
 			Coordinates: delivery.Pickup.Coordinates,
 			Time:        delivery.Pickup.Time,
-		},
-		Destination: DeliveriesResponseTimeAndPlace{
-			Coordinates: delivery.Destination.Coordinates,
-			Time:        delivery.Destination.Time,
 		},
 		Status: delivery.Status,
 	}

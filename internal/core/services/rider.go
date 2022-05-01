@@ -47,6 +47,8 @@ func (srv *riderService) Update(rider domain.Rider) (domain.Rider, error) {
 		existing.ServiceArea = rider.ServiceArea
 	}
 
+	existing.IsActive = rider.IsActive
+
 	return srv.riderRepository.UpdateRider(existing)
 }
 

@@ -5,6 +5,7 @@ import (
 	"delivery-service/internal/core/interfaces"
 	"delivery-service/pkg/rabbitmq"
 	"encoding/json"
+	"fmt"
 	"golang.org/x/exp/maps"
 )
 
@@ -34,10 +35,27 @@ func NewRabbitMQ(rabbitmq *rabbitmq.RabbitMQ, deliveryService interfaces.Deliver
 }
 
 func RiderCreate(topic string, body []byte, handler *rabbitmqHandler) error {
-	var rider domain.Rider
+	var riderObject = struct {
+		UserID string
+		User   struct {
+			Name string
+		}
+		Status      int
+		ServiceArea int
+		Capacity    domain.Dimensions
+		Location    domain.Location
+	}{}
 
-	if err := json.Unmarshal(body, &rider); err != nil {
+	if err := json.Unmarshal(body, &riderObject); err != nil {
 		return err
+	}
+
+	rider := domain.Rider{
+		ID:          riderObject.UserID,
+		Name:        riderObject.User.Name,
+		ServiceArea: riderObject.ServiceArea,
+		IsActive:    riderObject.Status == 1,
+		Location:    riderObject.Location,
 	}
 
 	if _, err := handler.riderService.Create(rider.ID, rider.Name, rider.ServiceArea); err != nil {
@@ -48,10 +66,27 @@ func RiderCreate(topic string, body []byte, handler *rabbitmqHandler) error {
 }
 
 func RiderUpdate(topic string, body []byte, handler *rabbitmqHandler) error {
-	var rider domain.Rider
+	fmt.Println(string(body))
 
-	if err := json.Unmarshal(body, &rider); err != nil {
+	var riderObject = struct {
+		UserID string
+		User   struct {
+			Name string
+		}
+		Status      int
+		ServiceArea int
+		Capacity    domain.Dimensions
+	}{}
+
+	if err := json.Unmarshal(body, &riderObject); err != nil {
 		return err
+	}
+
+	rider := domain.Rider{
+		ID:          riderObject.UserID,
+		Name:        riderObject.User.Name,
+		ServiceArea: riderObject.ServiceArea,
+		IsActive:    riderObject.Status == 2,
 	}
 
 	if _, err := handler.riderService.Update(rider); err != nil {
@@ -63,15 +98,19 @@ func RiderUpdate(topic string, body []byte, handler *rabbitmqHandler) error {
 
 func RiderUpdateLocation(topic string, body []byte, handler *rabbitmqHandler) error {
 	message := struct {
-		id       string
-		location domain.Location
+		Id       string
+		Location domain.Location
 	}{}
 
 	if err := json.Unmarshal(body, &message); err != nil {
 		return err
 	}
 
-	if err := handler.riderService.UpdateLocation(message.id, message.location); err != nil {
+	if message.Id == "" {
+		return nil
+	}
+
+	if err := handler.riderService.UpdateLocation(message.Id, message.Location); err != nil {
 		return err
 	}
 

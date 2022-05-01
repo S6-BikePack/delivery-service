@@ -8,6 +8,7 @@ import (
 	"github.com/twpayne/go-geom/encoding/wkt"
 	"gorm.io/gorm"
 	"gorm.io/gorm/schema"
+	"math"
 )
 
 type Location struct {
@@ -45,6 +46,12 @@ func (l *Location) Scan(value interface{}) error {
 	*l = p
 
 	return nil
+}
+
+func (l *Location) Round() Location {
+	l.Longitude = math.Ceil(l.Longitude*1000) / 1000
+	l.Latitude = math.Ceil(l.Latitude*1000) / 1000
+	return *l
 }
 
 func (Location) GormDBDataType(db *gorm.DB, field *schema.Field) string {

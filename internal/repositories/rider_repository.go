@@ -28,7 +28,7 @@ func NewRiderRepository(db *gorm.DB) (*riderRepository, error) {
 func (repository *riderRepository) GetRider(riderId string) (domain.Rider, error) {
 	var rider domain.Rider
 
-	repository.Connection.Preload(clause.Associations).First(&rider, riderId)
+	repository.Connection.Preload(clause.Associations).First(&rider, "id = ?", riderId)
 
 	if (rider == domain.Rider{}) {
 		return rider, errors.New("could not find rider")
@@ -46,6 +46,15 @@ func (repository *riderRepository) CreateRider(rider domain.Rider) (domain.Rider
 }
 
 func (repository *riderRepository) UpdateRider(rider domain.Rider) (domain.Rider, error) {
-	//TODO implement me
-	panic("implement me")
+	var existing domain.Rider
+	repository.Connection.Preload(clause.Associations).First(&existing, "id = ?", rider.ID)
+
+	existing.Location = rider.Location
+	existing.IsActive = rider.IsActive
+	existing.Name = rider.Name
+	existing.ServiceArea = rider.ServiceArea
+
+	repository.Connection.Save(&existing)
+
+	return existing, nil
 }

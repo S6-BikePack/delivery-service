@@ -33,6 +33,29 @@ func (srv *deliveryService) GetByDistance(location domain.Location, radius int) 
 	return srv.deliveryRepository.GetWithinRadius(location, radius)
 }
 
+func (srv *deliveryService) GetAroundRider(riderId string) ([]domain.Delivery, int) {
+	rider, err := srv.riderService.Get(riderId)
+
+	if err != nil || !rider.IsActive {
+		return []domain.Delivery{}, 0
+	}
+
+	//TODO: Get radius based on amount of available riders in area
+
+	radius := 1000
+
+	deliveries := srv.deliveryRepository.GetWithinRadius(rider.Location, radius)
+
+	for i, delivery := range deliveries {
+		delivery.Pickup.Coordinates.Round()
+		delivery.Destination.Coordinates.Round()
+
+		deliveries[i] = delivery
+	}
+
+	return deliveries, radius
+}
+
 func (srv *deliveryService) Create(parcelId, ownerId string, pickup, destination domain.TimeAndPlace) (domain.Delivery, error) {
 	owner, err := srv.deliveryRepository.GetCustomer(ownerId)
 

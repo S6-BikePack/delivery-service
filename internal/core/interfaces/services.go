@@ -8,6 +8,7 @@ type DeliveryService interface {
 	GetAll() ([]domain.Delivery, error)
 	Get(id string) (domain.Delivery, error)
 	GetByDistance(location domain.Location, radius int) []domain.Delivery
+	GetAroundRider(riderId string) ([]domain.Delivery, int)
 	Create(parcelId, ownerId string, pickup, destination domain.TimeAndPlace) (domain.Delivery, error)
 	AssignRider(id, riderId string) (domain.Delivery, error)
 	StartDelivery(id string) (domain.Delivery, error)

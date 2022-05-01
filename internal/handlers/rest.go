@@ -5,6 +5,7 @@ import (
 	_ "delivery-service/docs"
 	"delivery-service/internal/core/domain"
 	"delivery-service/internal/core/interfaces"
+	"delivery-service/pkg/authorization"
 	"delivery-service/pkg/dto"
 	"github.com/gin-gonic/gin"
 	ginSwagger "github.com/swaggo/gin-swagger"
@@ -33,6 +34,7 @@ func (handler *restHandler) SetupEndpoints() {
 	api := handler.router.Group("/api")
 	api.GET("/deliveries", handler.GetAll)
 	api.GET("/deliveries/:id", handler.Get)
+	api.GET("/deliveries/around/:riderId", handler.GetAroundRider)
 	api.GET("/deliveries/radius/:latlon", handler.GetByDistance)
 	api.POST("/deliveries", handler.Create)
 	api.POST("/deliveries/:id/rider", handler.AssignRider)
@@ -130,6 +132,35 @@ func (handler *restHandler) GetByDistance(c *gin.Context) {
 	deliveries := handler.deliveryService.GetByDistance(location, int(radius))
 
 	c.JSON(200, dto.CreateDeliveryListResponse(deliveries))
+}
+
+// GetAroundRider godoc
+// @Summary  get around rider
+// @Schemes
+// @Param        riderId     path  string           true  "Rider id"
+// @Description  gets all deliveries around a rider
+// @Produce      json
+// @Success      200  {object}  dto.GetAroundResponse
+// @Router       /api/deliveries/around/{riderId} [get]
+func (handler *restHandler) GetAroundRider(c *gin.Context) {
+	auth := authorization.NewRest(c)
+	riderId := c.Param("riderId")
+
+	if riderId == "" {
+		c.AbortWithStatus(http.StatusBadRequest)
+		return
+	}
+
+	if auth.AuthorizeAdmin() || auth.AuthorizeMatchingId(riderId) {
+		deliveries, radius := handler.deliveryService.GetAroundRider(riderId)
+
+		deliveryResponse := dto.CreateDeliveryListResponse(deliveries)
+
+		c.JSON(http.StatusOK, dto.CreateGetAroundResponse(deliveryResponse, radius))
+		return
+	}
+
+	c.AbortWithStatus(http.StatusUnauthorized)
 }
 
 // Create godoc
