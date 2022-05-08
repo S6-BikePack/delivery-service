@@ -6,7 +6,6 @@ import (
 	"delivery-service/internal/core/interfaces"
 	"delivery-service/pkg/rabbitmq"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"golang.org/x/exp/maps"
 )
@@ -205,22 +204,28 @@ func (handler *rabbitmqHandler) Listen() {
 			fun, exist := handler.handlers[msg.RoutingKey]
 
 			if exist {
-				handler.logger.Error(errors.New(fmt.Sprintf("handling message %s with body: %s", msg.RoutingKey, string(msg.Body))))
-
 				if err = fun(msg.RoutingKey, msg.Body, handler); err == nil {
-					msg.Ack(false)
+					err = msg.Ack(false)
+					if err != nil {
+						handler.logger.Error(err)
+					}
 
 					continue
 				}
 
-				handler.logger.Error(err)
-				msg.Nack(false, true)
+				err = msg.Nack(false, true)
+				if err != nil {
+					handler.logger.Error(err)
+				}
 
 				continue
 			}
 
 			handler.logger.Warnf("No handler exists for %d", msg.RoutingKey)
-			msg.Nack(false, true)
+			err = msg.Nack(false, true)
+			if err != nil {
+				handler.logger.Error(err)
+			}
 		}
 	}()
 

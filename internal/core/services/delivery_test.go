@@ -118,7 +118,9 @@ func (suite *DeliveryServiceTestSuite) Test_Get() {
 
 	mockRepository.On("Get", id).Return(domain.Delivery{ID: id}, nil)
 
-	sut.Get(id)
+	_, err := sut.Get(id)
+
+	suite.NoError(err)
 
 	mockRepository.AssertExpectations(suite.T())
 }

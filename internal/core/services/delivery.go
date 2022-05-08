@@ -85,7 +85,12 @@ func (srv *deliveryService) Create(parcelId, ownerId string, pickup, destination
 		return domain.Delivery{}, errors.New("saving new delivery failed")
 	}
 
-	srv.messagePublisher.CreateDelivery(delivery)
+	err = srv.messagePublisher.CreateDelivery(delivery)
+
+	if err != nil {
+		return delivery, err
+	}
+
 	return delivery, nil
 }
 
@@ -115,7 +120,12 @@ func (srv *deliveryService) AssignRider(id, riderId string) (domain.Delivery, er
 		return domain.Delivery{}, err
 	}
 
-	srv.messagePublisher.UpdateDelivery(delivery)
+	err = srv.messagePublisher.UpdateDelivery(delivery)
+
+	if err != nil {
+		return delivery, err
+	}
+
 	return delivery, nil
 }
 
@@ -134,7 +144,12 @@ func (srv *deliveryService) StartDelivery(id string) (domain.Delivery, error) {
 		return domain.Delivery{}, err
 	}
 
-	srv.messagePublisher.StartDelivery(delivery)
+	err = srv.messagePublisher.StartDelivery(delivery)
+
+	if err != nil {
+		return delivery, err
+	}
+
 	return delivery, nil
 }
 
@@ -154,7 +169,12 @@ func (srv *deliveryService) CompleteDelivery(id string) (domain.Delivery, error)
 		return domain.Delivery{}, err
 	}
 
-	srv.messagePublisher.CompleteDelivery(delivery)
+	err = srv.messagePublisher.CompleteDelivery(delivery)
+
+	if err != nil {
+		return delivery, err
+	}
+
 	return delivery, nil
 }
 
