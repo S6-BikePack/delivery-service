@@ -1,26 +1,32 @@
 package rabbitmq_service
 
 import (
+	"delivery-service/config"
 	"delivery-service/internal/core/domain"
 	"delivery-service/pkg/rabbitmq"
 	"encoding/json"
+	"fmt"
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
-type rabbitmqPublisher rabbitmq.RabbitMQ
+type rabbitmqPublisher struct {
+	Connection *amqp.Connection
+	Channel    *amqp.Channel
+	Config     *config.Config
+}
 
-func NewRabbitMQPublisher(rabbitmq *rabbitmq.RabbitMQ) *rabbitmqPublisher {
-	return &rabbitmqPublisher{Connection: rabbitmq.Connection, Channel: rabbitmq.Channel}
+func NewRabbitMQPublisher(rabbitmq *rabbitmq.RabbitMQ, cfg *config.Config) *rabbitmqPublisher {
+	return &rabbitmqPublisher{Connection: rabbitmq.Connection, Channel: rabbitmq.Channel, Config: cfg}
 }
 
 func (rmq *rabbitmqPublisher) CreateDelivery(delivery domain.Delivery) error {
-	err := rmq.publishJson("delivery.create", delivery)
+	err := rmq.publishJson("create", delivery)
 
 	return err
 }
 
 func (rmq *rabbitmqPublisher) UpdateDelivery(delivery domain.Delivery) error {
-	err := rmq.publishJson("delivery.update", delivery)
+	err := rmq.publishJson("update", delivery)
 
 	return err
 }
@@ -30,7 +36,7 @@ func (rmq *rabbitmqPublisher) StartDelivery(delivery domain.Delivery) error {
 		ID: delivery.ID,
 	}
 
-	err := rmq.publishJson("delivery.startDelivery", body)
+	err := rmq.publishJson("startDelivery", body)
 
 	return err
 }
@@ -40,7 +46,7 @@ func (rmq *rabbitmqPublisher) CompleteDelivery(delivery domain.Delivery) error {
 		ID: delivery.ID,
 	}
 
-	err := rmq.publishJson("delivery.completeDelivery", body)
+	err := rmq.publishJson("completeDelivery", body)
 
 	return err
 }
@@ -53,8 +59,8 @@ func (rmq *rabbitmqPublisher) publishJson(topic string, body interface{}) error 
 	}
 
 	err = rmq.Channel.Publish(
-		"topics",
-		topic,
+		rmq.Config.RabbitMQ.Exchange,
+		fmt.Sprintf("delivery.%s.%s", rmq.Config.ServiceArea.Identifier, topic),
 		false,
 		false,
 		amqp.Publishing{

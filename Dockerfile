@@ -18,9 +18,6 @@ RUN set -x && apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -
 COPY --from=rest /app/server /app/server
 
 LABEL traefik.enable=true
-LABEL traefik.http.routers.delivery-rest.rule=PathPrefix(`/api/deliveries`)
-LABEL traefik.http.routers.delivery-rest.entrypoints=web
-LABEL traefik.http.routers.delivery-rest.middlewares='serviceheaders, traefik-forward-auth'
 LABEL traefik.http.middlewares.serviceheaders.headers.accesscontrolalloworiginlist=*
 LABEL traefik.http.middlewares.serviceheaders.headers.accessControlAllowMethods='GET, POST'
 LABEL traefik.http.middlewares.serviceheaders.headers.accessControlAllowHeaders='authorization, content-type'

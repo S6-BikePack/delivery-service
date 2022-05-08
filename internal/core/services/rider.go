@@ -43,7 +43,7 @@ func (srv *riderService) Update(rider domain.Rider) (domain.Rider, error) {
 		existing.Name = rider.Name
 	}
 
-	if rider.ServiceArea != 0 {
+	if rider.ServiceArea != (domain.ServiceArea{}) {
 		existing.ServiceArea = rider.ServiceArea
 	}
 

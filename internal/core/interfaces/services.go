@@ -24,3 +24,7 @@ type RiderService interface {
 	UpdateActiveStatus(id string, status bool) (domain.Rider, error)
 	UpdateLocation(id string, location domain.Location) error
 }
+
+type ServiceAreaService interface {
+	SaveOrUpdateServiceArea(serviceArea domain.ServiceArea) error
+}

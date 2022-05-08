@@ -10,7 +10,7 @@
     "password": "password",
     "exchange": "topics"
   },
-  "db": {
+  "database": {
     "host": "localhost",
     "port": 5432,
     "user": "user",
@@ -19,8 +19,8 @@
     "debug": true
   },
   "serviceArea": {
-    "id": 1,
-    "identifier": "ehv"
+    "id": 0,
+    "identifier": "gen"
   }
 }
 

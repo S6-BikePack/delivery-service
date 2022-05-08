@@ -16,12 +16,14 @@ type DeliveryRepository interface {
 
 	GetCustomer(customerId string) (domain.Customer, error)
 	SaveOrUpdateCustomer(customer domain.Customer) (domain.Customer, error)
-
-	//GetNearRider(riderId string) ([]domain.Delivery, error)
 }
 
 type RiderRepository interface {
 	GetRider(riderId string) (domain.Rider, error)
 	CreateRider(rider domain.Rider) (domain.Rider, error)
 	UpdateRider(rider domain.Rider) (domain.Rider, error)
+}
+
+type ServiceAreaRepository interface {
+	SaveOrUpdateServiceArea(serviceArea domain.ServiceArea) error
 }

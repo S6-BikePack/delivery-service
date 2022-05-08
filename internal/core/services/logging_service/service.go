@@ -8,6 +8,7 @@ import (
 
 func NewZerologLogger(service string) *zerologLogger {
 	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
+	log.Logger.Level(zerolog.DebugLevel)
 
 	return &zerologLogger{
 		service: service,
@@ -58,6 +59,7 @@ func (zl *zerologLogger) Error(err error) {
 	log.Error().
 		Str("service", zl.service).
 		Err(err).
+		Stack().
 		Msg("")
 }
 

@@ -1,37 +1,57 @@
 package handlers
 
 import (
+	"delivery-service/config"
 	"delivery-service/internal/core/domain"
 	"delivery-service/internal/core/interfaces"
 	"delivery-service/pkg/rabbitmq"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"golang.org/x/exp/maps"
 )
 
 type rabbitmqHandler struct {
-	rabbitmq        *rabbitmq.RabbitMQ
-	deliveryService interfaces.DeliveryService
-	riderService    interfaces.RiderService
-	handlers        map[string]func(topic string, body []byte, handler *rabbitmqHandler) error
-	logger          interfaces.LoggingService
+	rabbitmq           *rabbitmq.RabbitMQ
+	deliveryService    interfaces.DeliveryService
+	riderService       interfaces.RiderService
+	serviceAreaService interfaces.ServiceAreaService
+	handlers           map[string]func(topic string, body []byte, handler *rabbitmqHandler) error
+	logger             interfaces.LoggingService
+	config             *config.Config
 }
 
-func NewRabbitMQ(rabbitmq *rabbitmq.RabbitMQ, deliveryService interfaces.DeliveryService, riderService interfaces.RiderService, logger interfaces.LoggingService) *rabbitmqHandler {
+func NewRabbitMQ(rabbitmq *rabbitmq.RabbitMQ, deliveryService interfaces.DeliveryService, riderService interfaces.RiderService, serviceAreaService interfaces.ServiceAreaService, logger interfaces.LoggingService, config *config.Config) *rabbitmqHandler {
 	return &rabbitmqHandler{
-		rabbitmq:        rabbitmq,
-		deliveryService: deliveryService,
-		riderService:    riderService,
+		rabbitmq:           rabbitmq,
+		deliveryService:    deliveryService,
+		riderService:       riderService,
+		serviceAreaService: serviceAreaService,
 		handlers: map[string]func(topic string, body []byte, handler *rabbitmqHandler) error{
-			"rider.create":            RiderCreate,
-			"rider.update":            RiderUpdate,
-			"rider.update.location":   RiderUpdateLocation,
+			"rider.create": RiderCreate,
+			"rider.update": RiderUpdate,
+			"rider." + config.ServiceArea.Identifier + ".update.location": RiderUpdateLocation,
 			"customer.create":         CustomerCreateOrUpdate,
 			"customer.update.details": CustomerCreateOrUpdate,
-			"parcel.create":           ParcelCreateOrUpdate,
+			"parcel." + config.ServiceArea.Identifier + ".create": ParcelCreateOrUpdate,
+			"service_area.create": ServiceAreaCreateOrUpdate,
 		},
 		logger: logger,
+		config: config,
 	}
+}
+
+func ServiceAreaCreateOrUpdate(topic string, body []byte, handler *rabbitmqHandler) error {
+	var serviceArea domain.ServiceArea
+	if err := json.Unmarshal(body, &serviceArea); err != nil {
+		return err
+	}
+
+	if err := handler.serviceAreaService.SaveOrUpdateServiceArea(serviceArea); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func RiderCreate(topic string, body []byte, handler *rabbitmqHandler) error {
@@ -41,7 +61,7 @@ func RiderCreate(topic string, body []byte, handler *rabbitmqHandler) error {
 			Name string
 		}
 		Status      int
-		ServiceArea int
+		ServiceArea domain.ServiceArea
 		Capacity    domain.Dimensions
 		Location    domain.Location
 	}{}
@@ -50,15 +70,9 @@ func RiderCreate(topic string, body []byte, handler *rabbitmqHandler) error {
 		return err
 	}
 
-	rider := domain.Rider{
-		ID:          riderObject.UserID,
-		Name:        riderObject.User.Name,
-		ServiceArea: riderObject.ServiceArea,
-		IsActive:    riderObject.Status == 1,
-		Location:    riderObject.Location,
-	}
+	fmt.Println(riderObject)
 
-	if _, err := handler.riderService.Create(rider.ID, rider.Name, rider.ServiceArea); err != nil {
+	if _, err := handler.riderService.Create(riderObject.UserID, riderObject.User.Name, riderObject.ServiceArea.ID); err != nil {
 		return err
 	}
 
@@ -66,15 +80,13 @@ func RiderCreate(topic string, body []byte, handler *rabbitmqHandler) error {
 }
 
 func RiderUpdate(topic string, body []byte, handler *rabbitmqHandler) error {
-	fmt.Println(string(body))
-
 	var riderObject = struct {
 		UserID string
 		User   struct {
 			Name string
 		}
 		Status      int
-		ServiceArea int
+		ServiceArea domain.ServiceArea
 		Capacity    domain.Dimensions
 	}{}
 
@@ -83,10 +95,10 @@ func RiderUpdate(topic string, body []byte, handler *rabbitmqHandler) error {
 	}
 
 	rider := domain.Rider{
-		ID:          riderObject.UserID,
-		Name:        riderObject.User.Name,
-		ServiceArea: riderObject.ServiceArea,
-		IsActive:    riderObject.Status == 2,
+		ID:            riderObject.UserID,
+		Name:          riderObject.User.Name,
+		ServiceAreaID: riderObject.ServiceArea.ID,
+		IsActive:      riderObject.ServiceArea.ID == handler.config.ServiceArea.Id && riderObject.Status == 2,
 	}
 
 	if _, err := handler.riderService.Update(rider); err != nil {
@@ -145,10 +157,10 @@ func ParcelCreateOrUpdate(topic string, body []byte, handler *rabbitmqHandler) e
 	return nil
 }
 
-func (handler *rabbitmqHandler) Listen(queue string) {
+func (handler *rabbitmqHandler) Listen() {
 
 	q, err := handler.rabbitmq.Channel.QueueDeclare(
-		queue,
+		handler.config.Server.Service+"-"+handler.config.ServiceArea.Identifier,
 		true,
 		false,
 		false,
@@ -164,7 +176,7 @@ func (handler *rabbitmqHandler) Listen(queue string) {
 		err = handler.rabbitmq.Channel.QueueBind(
 			q.Name,
 			s,
-			"topics",
+			handler.config.RabbitMQ.Exchange,
 			false,
 			nil)
 		if err != nil {
@@ -193,6 +205,8 @@ func (handler *rabbitmqHandler) Listen(queue string) {
 			fun, exist := handler.handlers[msg.RoutingKey]
 
 			if exist {
+				handler.logger.Error(errors.New(fmt.Sprintf("handling message %s with body: %s", msg.RoutingKey, string(msg.Body))))
+
 				if err = fun(msg.RoutingKey, msg.Body, handler); err == nil {
 					msg.Ack(false)
 
