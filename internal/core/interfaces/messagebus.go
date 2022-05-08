@@ -1,4 +1,4 @@
-package ports
+package interfaces
 
 import (
 	"delivery-service/internal/core/domain"

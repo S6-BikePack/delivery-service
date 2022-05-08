@@ -1,12 +1,14 @@
 package main
 
 import (
-	"delivery-service/internal/core/services/delivery_service"
+	"delivery-service/config"
+	"delivery-service/internal/core/services"
 	"delivery-service/internal/core/services/logging_service"
 	"delivery-service/internal/core/services/rabbitmq_service"
 	"delivery-service/internal/handlers"
-	"delivery-service/internal/repositories/delivery_repository"
+	"delivery-service/internal/repositories"
 	"delivery-service/pkg/rabbitmq"
+	"fmt"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"os"
@@ -14,41 +16,78 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-const defaultPort = ":1234"
-const defaultRmqConn = "amqp://user:password@localhost:5672/"
-const defaultDbConn = "postgres://user:password@localhost:5432/delivery"
+const defaultConfig = "./config/local.config"
 
 func main() {
-	logger := logging_service.NewZerologLogger("delivery-service")
+	cfgPath := GetEnvOrDefault("config", defaultConfig)
+	cfg, err := config.UseConfig(cfgPath)
 
-	dbConn := GetEnvOrDefault("DATABASE", defaultDbConn)
+	if err != nil {
+		panic(err)
+	}
 
-	db, err := gorm.Open(postgres.Open(dbConn))
-	db.Debug()
+	logger := logging_service.NewZerologLogger(cfg.Server.Service)
+
+	//--------------------------------------------------------------------------------------
+	// Setup Database
+	//--------------------------------------------------------------------------------------
+
+	dsn := fmt.Sprintf("host=%s port=%d user=%s "+
+		"password=%s dbname=%s sslmode=disable",
+		cfg.Database.Host, cfg.Database.Port, cfg.Database.User, cfg.Database.Password, cfg.Database.Database)
+	db, err := gorm.Open(postgres.Open(dsn))
 
 	if err != nil {
 		logger.Fatal(err)
 	}
 
-	deliveryRepository, err := delivery_repository.NewCockroachDB(db)
+	if cfg.Database.Debug {
+		db.Debug()
+	}
+
+	deliveryRepository, err := repositories.NewDeliveryRepository(db)
 
 	if err != nil {
 		logger.Fatal(err)
 	}
 
-	rmqConn := GetEnvOrDefault("RABBITMQ", defaultRmqConn)
-
-	rmqServer, err := rabbitmq.NewRabbitMQ(rmqConn)
+	riderRepostory, err := repositories.NewRiderRepository(db)
 
 	if err != nil {
 		logger.Fatal(err)
 	}
 
-	rmqPublisher := rabbitmq_service.NewRabbitMQPublisher(rmqServer)
+	serviceAreaRepository, err := repositories.NewServiceAreaRepository(db)
 
-	deliveryService := delivery_service.New(deliveryRepository, rmqPublisher)
+	if err != nil {
+		logger.Fatal(err)
+	}
 
-	rmqSubscriber := handlers.NewRabbitMQ(rmqServer, deliveryService, logger)
+	//--------------------------------------------------------------------------------------
+	// Setup RabbitMQ
+	//--------------------------------------------------------------------------------------
+
+	rmqServer, err := rabbitmq.NewRabbitMQ(cfg)
+
+	if err != nil {
+		logger.Fatal(err)
+	}
+
+	rmqPublisher := rabbitmq_service.NewRabbitMQPublisher(rmqServer, cfg)
+
+	//--------------------------------------------------------------------------------------
+	// Setup Services
+	//--------------------------------------------------------------------------------------
+
+	serviceAreaService := services.NewServiceAreaService(serviceAreaRepository)
+	riderService := services.NewRiderService(riderRepostory, rmqPublisher)
+	deliveryService := services.NewDeliveryService(deliveryRepository, rmqPublisher, riderService)
+
+	rmqSubscriber := handlers.NewRabbitMQ(rmqServer, deliveryService, riderService, serviceAreaService, logger, cfg)
+
+	//--------------------------------------------------------------------------------------
+	// Setup HTTP server
+	//--------------------------------------------------------------------------------------
 
 	router := gin.New()
 
@@ -56,14 +95,13 @@ func main() {
 	deliveryHandler.SetupEndpoints()
 	deliveryHandler.SetupSwagger()
 
-	port := GetEnvOrDefault("PORT", defaultPort)
-
-	go rmqSubscriber.Listen("deliveryQueue")
-	logger.Fatal(router.Run(port))
+	go rmqSubscriber.Listen()
+	logger.Fatal(router.Run(cfg.Server.Port))
 }
 
 func GetEnvOrDefault(environmentKey, defaultValue string) string {
 	returnValue := os.Getenv(environmentKey)
+	fmt.Println(returnValue)
 	if returnValue == "" {
 		returnValue = defaultValue
 	}

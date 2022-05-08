@@ -49,7 +49,7 @@ func (d *DeliveryRepository) GetCustomer(customerId string) (domain.Customer, er
 	return args.Get(0).(domain.Customer), args.Error(1)
 }
 
-func (d *DeliveryRepository) SaveOrUpdateRider(rider domain.Rider) (domain.Rider, error) {
+func (d *DeliveryRepository) CreateRider(rider domain.Rider) (domain.Rider, error) {
 	args := d.Called(rider)
 	return args.Get(0).(domain.Rider), args.Error(1)
 }
@@ -62,4 +62,9 @@ func (d *DeliveryRepository) SaveOrUpdateCustomer(customer domain.Customer) (dom
 func (d *DeliveryRepository) SaveOrUpdateParcel(parcel domain.Parcel) (domain.Parcel, error) {
 	args := d.Called(parcel)
 	return args.Get(0).(domain.Parcel), args.Error(1)
+}
+
+func (d *DeliveryRepository) UpdateRider(rider domain.Rider) (domain.Rider, error) {
+	args := d.Called(rider)
+	return args.Get(0).(domain.Rider), args.Error(1)
 }

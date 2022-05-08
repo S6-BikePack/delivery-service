@@ -1,8 +1,9 @@
-package delivery_service
+package services
 
 import (
 	"delivery-service/internal/core/domain"
 	"delivery-service/mocks"
+	"errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 	"testing"
@@ -25,7 +26,7 @@ func MockDeliveries() []domain.Delivery {
 			},
 			Rider: domain.Rider{
 				ID:          "rider-1",
-				ServiceArea: 1,
+				ServiceArea: domain.ServiceArea{ID: 1, Identifier: "test"},
 			},
 			Customer: domain.Customer{
 				ID:          "customer-1",
@@ -33,16 +34,16 @@ func MockDeliveries() []domain.Delivery {
 			},
 			Pickup: domain.TimeAndPlace{
 				Coordinates: domain.Location{
-					Latitude:  1,
-					Longitude: 2,
+					Latitude:  1.123451242,
+					Longitude: 2.123415342,
 				},
 				Address: "Test street 1",
 				Time:    time.Date(2022, 1, 1, 1, 1, 1, 1, time.UTC),
 			},
 			Destination: domain.TimeAndPlace{
 				Coordinates: domain.Location{
-					Latitude:  2,
-					Longitude: 3,
+					Latitude:  2.534543634,
+					Longitude: 3.346123423,
 				},
 				Address: "Test street 2",
 			},
@@ -62,7 +63,7 @@ func MockDeliveries() []domain.Delivery {
 			},
 			Rider: domain.Rider{
 				ID:          "rider-2",
-				ServiceArea: 2,
+				ServiceArea: domain.ServiceArea{ID: 1, Identifier: "test"},
 			},
 			Customer: domain.Customer{
 				ID:          "customer-1",
@@ -70,16 +71,16 @@ func MockDeliveries() []domain.Delivery {
 			},
 			Pickup: domain.TimeAndPlace{
 				Coordinates: domain.Location{
-					Latitude:  1,
-					Longitude: 2,
+					Latitude:  1.67354234,
+					Longitude: 2.23523611,
 				},
 				Address: "Test street 1",
 				Time:    time.Date(2022, 1, 1, 1, 1, 1, 1, time.UTC),
 			},
 			Destination: domain.TimeAndPlace{
 				Coordinates: domain.Location{
-					Latitude:  2,
-					Longitude: 3,
+					Latitude:  2.64533143,
+					Longitude: 3.53141233,
 				},
 				Address: "Test street 2",
 			},
@@ -95,7 +96,9 @@ type DeliveryServiceTestSuite struct {
 func (suite *DeliveryServiceTestSuite) Test_GetAll() {
 	mockRepository := new(mocks.DeliveryRepository)
 	mockMessageBus := new(mocks.MessageBusPublisher)
-	sut := New(mockRepository, mockMessageBus)
+
+	riderService := NewRiderService(mockRepository, mockMessageBus)
+	sut := NewDeliveryService(mockRepository, mockMessageBus, riderService)
 
 	mockRepository.On("GetAll").Return(MockDeliveries(), nil)
 
@@ -109,12 +112,15 @@ func (suite *DeliveryServiceTestSuite) Test_Get() {
 	mockRepository := new(mocks.DeliveryRepository)
 	mockMessageBus := new(mocks.MessageBusPublisher)
 
-	sut := New(mockRepository, mockMessageBus)
+	riderService := NewRiderService(mockRepository, mockMessageBus)
+	sut := NewDeliveryService(mockRepository, mockMessageBus, riderService)
 	id := "delivery-1"
 
 	mockRepository.On("Get", id).Return(domain.Delivery{ID: id}, nil)
 
-	sut.Get(id)
+	_, err := sut.Get(id)
+
+	suite.NoError(err)
 
 	mockRepository.AssertExpectations(suite.T())
 }
@@ -123,7 +129,8 @@ func (suite *DeliveryServiceTestSuite) Test_GetByDistance() {
 	mockRepository := new(mocks.DeliveryRepository)
 	mockMessageBus := new(mocks.MessageBusPublisher)
 
-	sut := New(mockRepository, mockMessageBus)
+	riderService := NewRiderService(mockRepository, mockMessageBus)
+	sut := NewDeliveryService(mockRepository, mockMessageBus, riderService)
 
 	location := domain.Location{
 		Latitude:  1,
@@ -136,6 +143,62 @@ func (suite *DeliveryServiceTestSuite) Test_GetByDistance() {
 	sut.GetByDistance(location, radius)
 
 	mockRepository.AssertExpectations(suite.T())
+}
+
+func (suite *DeliveryServiceTestSuite) Test_GetAroundRider() {
+	mockRepository := new(mocks.DeliveryRepository)
+	mockMessageBus := new(mocks.MessageBusPublisher)
+
+	riderService := NewRiderService(mockRepository, mockMessageBus)
+	sut := NewDeliveryService(mockRepository, mockMessageBus, riderService)
+
+	rider := domain.Rider{
+		ID:          "test-rider",
+		Name:        "Test",
+		ServiceArea: domain.ServiceArea{ID: 1, Identifier: "test"},
+		IsActive:    true,
+		Location: domain.Location{
+			Latitude:  1,
+			Longitude: 2,
+		},
+	}
+
+	roundedCoordinates := domain.Location{
+		Latitude:  1.124,
+		Longitude: 2.124,
+	}
+
+	mockRepository.On("GetRider", rider.ID).Return(rider, nil)
+	mockRepository.On("GetWithinRadius", rider.Location, 1000).Return(MockDeliveries(), nil)
+
+	deliveries, radius := sut.GetAroundRider(rider.ID)
+
+	mockRepository.AssertExpectations(suite.T())
+
+	assert.Equal(suite.T(), 1000, radius)
+	assert.Equal(suite.T(), len(MockDeliveries()), len(deliveries))
+	assert.Equal(suite.T(), roundedCoordinates, deliveries[0].Pickup.Coordinates)
+}
+
+func (suite *DeliveryServiceTestSuite) Test_GetAroundRider_NotFound() {
+	mockRepository := new(mocks.DeliveryRepository)
+	mockMessageBus := new(mocks.MessageBusPublisher)
+
+	riderService := NewRiderService(mockRepository, mockMessageBus)
+	sut := NewDeliveryService(mockRepository, mockMessageBus, riderService)
+
+	rider := domain.Rider{
+		ID: "test-rider",
+	}
+
+	mockRepository.On("GetRider", rider.ID).Return(domain.Rider{}, errors.New("rider not found"))
+
+	deliveries, radius := sut.GetAroundRider(rider.ID)
+
+	mockRepository.AssertExpectations(suite.T())
+
+	assert.Equal(suite.T(), []domain.Delivery{}, deliveries)
+	assert.Equal(suite.T(), 0, radius)
 }
 
 func TestDeliveryServiceTestSuite(t *testing.T) {
