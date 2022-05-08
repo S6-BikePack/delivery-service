@@ -22,7 +22,7 @@ func (suite *RiderServiceTestSuite) Test_Get() {
 	rider := domain.Rider{
 		ID:          "rider-1",
 		Name:        "test",
-		ServiceArea: 1,
+		ServiceArea: domain.ServiceArea{ID: 1, Identifier: "test"},
 	}
 
 	mockRepository.On("GetRider", rider.ID).Return(rider, nil)
@@ -42,14 +42,13 @@ func (suite *RiderServiceTestSuite) Test_Create() {
 	sut := NewRiderService(mockRepository, mockMessageBus)
 
 	rider := domain.Rider{
-		ID:          "rider-1",
-		Name:        "test",
-		ServiceArea: 1,
+		ID:   "rider-1",
+		Name: "test",
 	}
 
 	mockRepository.On("CreateRider", rider).Return(rider, nil)
 
-	result, err := sut.Create(rider.ID, rider.Name, rider.ServiceArea)
+	result, err := sut.Create(rider.ID, rider.Name, 0)
 
 	mockRepository.AssertExpectations(suite.T())
 
@@ -66,10 +65,10 @@ func (suite *RiderServiceTestSuite) Test_Create_MissingId() {
 	rider := domain.Rider{
 		ID:          "rider-1",
 		Name:        "test",
-		ServiceArea: 1,
+		ServiceArea: domain.ServiceArea{ID: 1, Identifier: "test"},
 	}
 
-	_, err := sut.Create("", rider.Name, rider.ServiceArea)
+	_, err := sut.Create("", rider.Name, 1)
 
 	assert.Error(suite.T(), err)
 }
@@ -83,10 +82,10 @@ func (suite *RiderServiceTestSuite) Test_Create_MissingName() {
 	rider := domain.Rider{
 		ID:          "rider-1",
 		Name:        "test",
-		ServiceArea: 1,
+		ServiceArea: domain.ServiceArea{ID: 1, Identifier: "test"},
 	}
 
-	_, err := sut.Create(rider.ID, "", rider.ServiceArea)
+	_, err := sut.Create(rider.ID, "", 1)
 
 	assert.Error(suite.T(), err)
 }
@@ -100,13 +99,13 @@ func (suite *RiderServiceTestSuite) Test_Update() {
 	oldRider := domain.Rider{
 		ID:          "rider-1",
 		Name:        "test",
-		ServiceArea: 1,
+		ServiceArea: domain.ServiceArea{ID: 1, Identifier: "test"},
 	}
 
 	rider := domain.Rider{
 		ID:          "rider-1",
 		Name:        "newTest",
-		ServiceArea: 2,
+		ServiceArea: domain.ServiceArea{ID: 1, Identifier: "test"},
 	}
 
 	mockRepository.On("GetRider", rider.ID).Return(oldRider, nil)
@@ -129,7 +128,7 @@ func (suite *RiderServiceTestSuite) Test_Update_NameOnly() {
 	oldRider := domain.Rider{
 		ID:          "rider-1",
 		Name:        "test",
-		ServiceArea: 1,
+		ServiceArea: domain.ServiceArea{ID: 1, Identifier: "test"},
 	}
 
 	rider := domain.Rider{
@@ -165,12 +164,12 @@ func (suite *RiderServiceTestSuite) Test_Update_ServiceAreaOnly() {
 	oldRider := domain.Rider{
 		ID:          "rider-1",
 		Name:        "test",
-		ServiceArea: 1,
+		ServiceArea: domain.ServiceArea{ID: 1, Identifier: "test"},
 	}
 
 	rider := domain.Rider{
 		ID:          "rider-1",
-		ServiceArea: 2,
+		ServiceArea: domain.ServiceArea{ID: 2, Identifier: "test-2"},
 	}
 
 	combined := domain.Rider{
@@ -201,7 +200,7 @@ func (suite *RiderServiceTestSuite) Test_Update_NotFound() {
 	rider := domain.Rider{
 		ID:          "rider-1",
 		Name:        "test",
-		ServiceArea: 1,
+		ServiceArea: domain.ServiceArea{ID: 1, Identifier: "test"},
 	}
 
 	mockRepository.On("GetRider", rider.ID).Return(domain.Rider{}, errors.New("rider not found"))
@@ -220,14 +219,14 @@ func (suite *RiderServiceTestSuite) Test_UpdateActiveStatus() {
 	rider := domain.Rider{
 		ID:          "rider-1",
 		Name:        "test",
-		ServiceArea: 1,
+		ServiceArea: domain.ServiceArea{ID: 1, Identifier: "test"},
 		IsActive:    false,
 	}
 
 	updatedRider := domain.Rider{
 		ID:          "rider-1",
 		Name:        "test",
-		ServiceArea: 1,
+		ServiceArea: domain.ServiceArea{ID: 1, Identifier: "test"},
 		IsActive:    true,
 	}
 
@@ -270,14 +269,14 @@ func (suite *RiderServiceTestSuite) Test_UpdateActiveStatus_NotUpdated() {
 	rider := domain.Rider{
 		ID:          "rider-1",
 		Name:        "test",
-		ServiceArea: 1,
+		ServiceArea: domain.ServiceArea{ID: 1, Identifier: "test"},
 		IsActive:    false,
 	}
 
 	updatedRider := domain.Rider{
 		ID:          "rider-1",
 		Name:        "test",
-		ServiceArea: 1,
+		ServiceArea: domain.ServiceArea{ID: 1, Identifier: "test"},
 		IsActive:    true,
 	}
 
@@ -300,7 +299,7 @@ func (suite *RiderServiceTestSuite) Test_UpdateActiveStatus_Same() {
 	rider := domain.Rider{
 		ID:          "rider-1",
 		Name:        "test",
-		ServiceArea: 1,
+		ServiceArea: domain.ServiceArea{ID: 1, Identifier: "test"},
 		IsActive:    true,
 	}
 

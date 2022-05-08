@@ -26,7 +26,7 @@ func MockDeliveries() []domain.Delivery {
 			},
 			Rider: domain.Rider{
 				ID:          "rider-1",
-				ServiceArea: 1,
+				ServiceArea: domain.ServiceArea{ID: 1, Identifier: "test"},
 			},
 			Customer: domain.Customer{
 				ID:          "customer-1",
@@ -63,7 +63,7 @@ func MockDeliveries() []domain.Delivery {
 			},
 			Rider: domain.Rider{
 				ID:          "rider-2",
-				ServiceArea: 2,
+				ServiceArea: domain.ServiceArea{ID: 1, Identifier: "test"},
 			},
 			Customer: domain.Customer{
 				ID:          "customer-1",
@@ -153,7 +153,7 @@ func (suite *DeliveryServiceTestSuite) Test_GetAroundRider() {
 	rider := domain.Rider{
 		ID:          "test-rider",
 		Name:        "Test",
-		ServiceArea: 1,
+		ServiceArea: domain.ServiceArea{ID: 1, Identifier: "test"},
 		IsActive:    true,
 		Location: domain.Location{
 			Latitude:  1,
