@@ -208,11 +208,13 @@ func (handler *rabbitmqHandler) Listen() {
 					err = msg.Ack(false)
 					if err != nil {
 						handler.logger.Error(err)
+						println(err)
 					}
 
 					continue
 				}
 
+				println(err)
 				err = msg.Nack(false, true)
 				if err != nil {
 					handler.logger.Error(err)
