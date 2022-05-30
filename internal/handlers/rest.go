@@ -84,7 +84,7 @@ func (handler *restHandler) Get(c *gin.Context) {
 		return
 	}
 
-	c.JSON(200, dto.CreateDeliveryResponse(delivery))
+	c.JSON(200, dto.CreateDetailedDeliveryResponse(delivery))
 }
 
 // GetByDistance godoc
@@ -233,7 +233,7 @@ func (handler *restHandler) AssignRider(c *gin.Context) {
 		return
 	}
 
-	c.JSON(200, dto.CreateDeliveryResponse(delivery))
+	c.JSON(200, dto.CreateDetailedDeliveryResponse(delivery))
 }
 
 // StartDelivery godoc

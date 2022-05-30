@@ -1,4 +1,4 @@
-package rabbitmq_service
+package services
 
 import (
 	"delivery-service/config"

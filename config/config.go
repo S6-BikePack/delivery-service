@@ -7,6 +7,7 @@ type Config struct {
 	RabbitMQ    RabbitMQ
 	Database    Database
 	ServiceArea ServiceArea
+	MapBox      MapBox
 }
 
 type Server struct {
@@ -34,6 +35,10 @@ type Database struct {
 type ServiceArea struct {
 	Id         int
 	Identifier string
+}
+
+type MapBox struct {
+	AccessToken string
 }
 
 func UseConfig(path string) (*Config, error) {

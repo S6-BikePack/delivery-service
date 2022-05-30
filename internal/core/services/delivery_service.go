@@ -11,13 +11,15 @@ type deliveryService struct {
 	deliveryRepository interfaces.DeliveryRepository
 	messagePublisher   interfaces.MessageBusPublisher
 	riderService       interfaces.RiderService
+	routingService     interfaces.RoutingService
 }
 
-func NewDeliveryService(deliveryRepository interfaces.DeliveryRepository, messagePublisher interfaces.MessageBusPublisher, riderService interfaces.RiderService) *deliveryService {
+func NewDeliveryService(deliveryRepository interfaces.DeliveryRepository, messagePublisher interfaces.MessageBusPublisher, riderService interfaces.RiderService, routingService interfaces.RoutingService) *deliveryService {
 	return &deliveryService{
 		deliveryRepository: deliveryRepository,
 		messagePublisher:   messagePublisher,
 		riderService:       riderService,
+		routingService:     routingService,
 	}
 }
 
@@ -36,11 +38,9 @@ func (srv *deliveryService) GetByDistance(location domain.Location, radius int) 
 func (srv *deliveryService) GetAroundRider(riderId string) ([]domain.Delivery, int) {
 	rider, err := srv.riderService.Get(riderId)
 
-	if err != nil || !rider.IsActive {
-		return []domain.Delivery{}, 0
+	if err != nil {
+		return nil, 0
 	}
-
-	//TODO: Get radius based on amount of available riders in area
 
 	radius := 1000
 
@@ -113,6 +113,12 @@ func (srv *deliveryService) AssignRider(id, riderId string) (domain.Delivery, er
 
 	delivery.Rider = rider
 	delivery.RiderId = riderId
+	delivery.Status = 3
+	delivery.Route, err = srv.routingService.GetRoute(delivery.Pickup.Coordinates, delivery.Destination.Coordinates)
+
+	if err != nil {
+		return domain.Delivery{}, errors.New("could not create route")
+	}
 
 	delivery, err = srv.deliveryRepository.Update(delivery)
 

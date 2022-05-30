@@ -13,7 +13,6 @@ type DeliveryResponseParcel struct {
 
 type DeliveryResponseTimeAndPlace struct {
 	Coordinates domain.Location `json:"coordinates"`
-	Address     string          `json:"address"`
 	Time        time.Time       `json:"time"`
 }
 
@@ -39,12 +38,10 @@ func CreateDeliveryResponse(delivery domain.Delivery) DeliveryResponse {
 		CustomerId: delivery.Customer.ID,
 		Pickup: DeliveryResponseTimeAndPlace{
 			Coordinates: delivery.Pickup.Coordinates,
-			Address:     delivery.Pickup.Address,
 			Time:        delivery.Pickup.Time,
 		},
 		Destination: DeliveryResponseTimeAndPlace{
 			Coordinates: delivery.Destination.Coordinates,
-			Address:     delivery.Destination.Address,
 			Time:        delivery.Destination.Time,
 		},
 		Status: delivery.Status,

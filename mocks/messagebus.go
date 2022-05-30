@@ -10,21 +10,21 @@ type MessageBusPublisher struct {
 }
 
 func (m *MessageBusPublisher) CreateDelivery(delivery domain.Delivery) error {
-	m.Called(delivery)
-	return nil
+	args := m.Called(delivery)
+	return args.Error(0)
 }
 
 func (m *MessageBusPublisher) UpdateDelivery(delivery domain.Delivery) error {
-	m.Called(delivery)
-	return nil
+	args := m.Called(delivery)
+	return args.Error(0)
 }
 
 func (m *MessageBusPublisher) StartDelivery(delivery domain.Delivery) error {
-	m.Called(delivery)
-	return nil
+	args := m.Called(delivery)
+	return args.Error(0)
 }
 
 func (m *MessageBusPublisher) CompleteDelivery(delivery domain.Delivery) error {
-	m.Called(delivery)
-	return nil
+	args := m.Called(delivery)
+	return args.Error(0)
 }

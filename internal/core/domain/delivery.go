@@ -15,6 +15,7 @@ type Delivery struct {
 	Pickup      TimeAndPlace `gorm:"embedded;embeddedPrefix:pickup_" json:"pickup"`
 	Destination TimeAndPlace `gorm:"embedded;embeddedPrefix:destination_" json:"destination"`
 	Status      int          `json:"status"`
+	Route       Line         `json:"route"`
 }
 
 func NewDelivery(parcel Parcel, owner Customer, pickup, destination TimeAndPlace) (Delivery, error) {

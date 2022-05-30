@@ -12,7 +12,7 @@
   },
   "database": {
     "host": "localhost",
-    "port": 5432,
+    "port": 5431,
     "user": "user",
     "password": "password",
     "database": "delivery",
@@ -21,6 +21,9 @@
   "serviceArea": {
     "id": 0,
     "identifier": "gen"
+  },
+  "mapbox": {
+    "accessToken": "pk.eyJ1IjoicmVuc2IiLCJhIjoiY2s2a2xpNmg0MDU2dzNscnI5cjRnaG1uciJ9.GKmyEyKDRJCTuLe2elJ0Pw"
   }
 }
 

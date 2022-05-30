@@ -129,13 +129,16 @@ func RiderUpdateLocation(topic string, body []byte, handler *rabbitmqHandler) er
 }
 
 func CustomerCreateOrUpdate(topic string, body []byte, handler *rabbitmqHandler) error {
-	var customer domain.Customer
+	var content struct {
+		UserID      string
+		ServiceArea int
+	}
 
-	if err := json.Unmarshal(body, &customer); err != nil {
+	if err := json.Unmarshal(body, &content); err != nil {
 		return err
 	}
 
-	if err := handler.deliveryService.SaveOrUpdateCustomer(customer); err != nil {
+	if err := handler.deliveryService.SaveOrUpdateCustomer(domain.NewCustomer(content.UserID, content.ServiceArea)); err != nil {
 		return err
 	}
 
@@ -202,19 +205,19 @@ func (handler *rabbitmqHandler) Listen() {
 	go func() {
 		for msg := range msgs {
 			fun, exist := handler.handlers[msg.RoutingKey]
-
+			fmt.Println(string(msg.Body))
 			if exist {
 				if err = fun(msg.RoutingKey, msg.Body, handler); err == nil {
 					err = msg.Ack(false)
 					if err != nil {
 						handler.logger.Error(err)
-						println(err)
+						fmt.Println(err)
 					}
 
 					continue
 				}
 
-				println(err)
+				fmt.Println(err)
 				err = msg.Nack(false, true)
 				if err != nil {
 					handler.logger.Error(err)

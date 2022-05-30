@@ -28,3 +28,7 @@ type RiderService interface {
 type ServiceAreaService interface {
 	SaveOrUpdateServiceArea(serviceArea domain.ServiceArea) error
 }
+
+type RoutingService interface {
+	GetRoute(pickup, destination domain.Location) (domain.Line, error)
+}
