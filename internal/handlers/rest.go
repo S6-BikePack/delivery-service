@@ -7,6 +7,7 @@ import (
 	"delivery-service/internal/core/interfaces"
 	"delivery-service/pkg/authorization"
 	"delivery-service/pkg/dto"
+	"delivery-service/pkg/logging"
 	"github.com/gin-gonic/gin"
 	ginSwagger "github.com/swaggo/gin-swagger"
 	"github.com/swaggo/gin-swagger/swaggerFiles"
@@ -19,10 +20,10 @@ import (
 type restHandler struct {
 	deliveryService interfaces.DeliveryService
 	router          *gin.Engine
-	logger          interfaces.LoggingService
+	logger          logging.Logger
 }
 
-func NewRest(deliveryService interfaces.DeliveryService, router *gin.Engine, logger interfaces.LoggingService) *restHandler {
+func NewRest(deliveryService interfaces.DeliveryService, router *gin.Engine, logger logging.Logger) *restHandler {
 	return &restHandler{
 		deliveryService: deliveryService,
 		router:          router,
@@ -177,7 +178,7 @@ func (handler *restHandler) Create(c *gin.Context) {
 	err := c.BindJSON(&body)
 
 	if err != nil {
-		handler.logger.Error(err)
+		handler.logger.Error(c, "Could not bind body %s", err)
 		c.AbortWithStatus(http.StatusBadRequest)
 	}
 
@@ -185,21 +186,21 @@ func (handler *restHandler) Create(c *gin.Context) {
 	pickup.Time = time.Unix(body.Pickup.Time, 0)
 
 	if err != nil {
-		handler.logger.Error(err)
+		handler.logger.Error(c, "Could not create pickup %s", err)
 		c.AbortWithStatus(http.StatusBadRequest)
 	}
 
 	destination, err := domain.NewTimeAndPlace(body.Destination.Address, body.Destination.Coordinates)
 
 	if err != nil {
-		handler.logger.Error(err)
+		handler.logger.Error(c, "Could not create destination %s", err)
 		c.AbortWithStatus(http.StatusBadRequest)
 	}
 
 	delivery, err := handler.deliveryService.Create(body.ParcelId, body.OwnerId, pickup, destination)
 
 	if err != nil {
-		handler.logger.Error(err)
+		handler.logger.Error(c, "Could not create delivery %s", err)
 		c.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
@@ -221,14 +222,14 @@ func (handler *restHandler) AssignRider(c *gin.Context) {
 	err := c.BindJSON(&body)
 
 	if err != nil {
-		handler.logger.Error(err)
+		handler.logger.Error(c, "Could not bind body %s", err)
 		c.AbortWithStatus(500)
 	}
 
 	delivery, err := handler.deliveryService.AssignRider(c.Param("id"), body.RiderId)
 
 	if err != nil {
-		handler.logger.Error(err)
+		handler.logger.Error(c, "Could not assign rider %s", err)
 		c.AbortWithStatusJSON(500, gin.H{"message": err.Error()})
 		return
 	}
@@ -247,7 +248,7 @@ func (handler *restHandler) StartDelivery(c *gin.Context) {
 	delivery, err := handler.deliveryService.StartDelivery(c.Param("id"))
 
 	if err != nil {
-		handler.logger.Error(err)
+		handler.logger.Error(c, "Could not start delivery %s", err)
 		c.AbortWithStatusJSON(500, gin.H{"message": err.Error()})
 		return
 	}
@@ -266,7 +267,7 @@ func (handler *restHandler) CompleteDelivery(c *gin.Context) {
 	delivery, err := handler.deliveryService.CompleteDelivery(c.Param("id"))
 
 	if err != nil {
-		handler.logger.Error(err)
+		handler.logger.Error(c, "Could not complete delivery %s", err)
 		c.AbortWithStatusJSON(500, gin.H{"message": err.Error()})
 		return
 	}
